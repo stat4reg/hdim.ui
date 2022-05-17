@@ -2,111 +2,143 @@
 % Please edit documentation in R/ui.causal.R
 \name{ui.causal}
 \alias{ui.causal}
-\title{Uncertainty intervals for Average Causal Effects}
+\title{Uncertainty intervals for causal parameters including average causal effect and average causal effect among treated}
 \usage{
 ui.causal(
-  out.formula,
-  treat.formula,
-  data,
-  rho = c(-0.3, 0.3),
-  rho0 = NULL,
-  rho1 = NULL,
-  ACT = FALSE,
+  out.formula = NULL,
+  treat.formula = NULL,
+  data = NULL,
+  Y = NULL,
+  T = NULL,
+  X = NULL,
+  rho0 = c(-0.1, 0.1),
+  rho1 = c(-0.1, 0.1),
+  param = "ACE",
+  subset = "noselection",
   sand = TRUE,
   gridn = 21,
-  plot = TRUE,
   rho.plotrange = c(-0.5, 0.5),
-  alpha = 0.05
+  alpha = 0.05,
+  regularization_alpha = 1,
+  sigma_correction = TRUE,
+  missing = FALSE
 )
 }
 \arguments{
-\item{out.formula}{Formula for the outcome regression models}
+\item{out.formula}{Formula for the outcome regression model(s).}
 
 \item{treat.formula}{Formula for the propensity score model (regression model for treatment assignment).}
 
-\item{data}{data.frame containing the variables in the formula.}
+\item{data}{data.frame containing the variables in the formulas.}
 
-\item{rho}{Pre-specified interval for \code{rho0} and \code{rho1}.}
+\item{Y}{Outcome vector. The arguments Y,T and X will be only used if out.formula, treat.formula or data matrix is not specified.}
 
-\item{rho0}{Pre-specified value of \code{rho0}, if an interval it has to be the same as \code{rho1}.}
+\item{T}{Treatment assignment vector. The arguments Y,T and X will be only used will be used if out.formula, treat.formula or data matrix is not specified.}
 
-\item{rho1}{Pre-specified value of \code{rho1}, if an interval it has to be the same as \code{rho0}.}
+\item{X}{Covariate matrix. The arguments Y,T and X will be only used if out.formula, treat.formula or data matrix is not specified.}
 
-\item{ACT}{If TRUE Average Causal effect of the Treated is calculated, if FALSE Average Causal effect is calculated. Default is FALSE.}
+\item{rho0}{Pre-specified value of \code{rho0}.}
+
+\item{rho1}{Pre-specified value of \code{rho1}.}
+
+\item{param}{Specifies parameter of interest, it can be "ACE" (default value), "ACT", "Y0", "Y1", "Y0T1" or "Y1T0".}
+
+\item{subset}{Specifies which subset of the covariates should be used in the regression models. It can be "noselection" (default value), "single", "double" or "refit". "Noselection" or "double" is suggested. See details.}
 
 \item{sand}{Specifies which estimator of the standard errors should be used for OR, see details.}
 
-\item{gridn}{Number of fixed points within the \code{rho} interval for which sigma0 and sigma1 should be estimated.}
+\item{gridn}{Number of fixed points within the \code{rho0} and \code{rho1} intervals for which sigma0 and sigma1 should be estimated.}
 
-\item{plot}{If TRUE the function runs slightly slower but you will be able to plot your results using \code{\link{plot.uicausal}}.}
-
-\item{rho.plotrange}{an interval larger than \code{rho} for the plot using \code{\link{plot.uicausal}}.}
+\item{rho.plotrange}{An interval larger than \code{rho0} and \code{rho1}. This specifies the range of value (on x axis) where the ui plot will be made using \code{\link{plot.ui}}.}
 
 \item{alpha}{Default 0.05 corresponding to a confidence level of 95 for CI and UI.}
+
+\item{sigma_correction}{A logical variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias.}
+
+\item{missing}{This argument should not be changed manually. A logical variable which is FALSE by default and TRUE if this function is called withing the function \code{\link{ui.missing}}.}
 }
 \value{
 A list containing:
-\item{call}{The matched call}
-\item{rho0}{The rage of \code{rho0} from which the ui is calculated}
-\item{rho1}{If ACT==FALSE,range of \code{rho1} from which the ui is calculated}
+\item{call}{The matched call.}
+\item{rho0}{The range of \code{rho0} from which the ui is calculated.}
+\item{rho1}{If ACT==FALSE,range of \code{rho1} from which the ui is calculated.}
 \item{out.model0}{Outcome regression model for non-treated.}
 \item{out.model1}{Outcome regression model for treated.}
 \item{treat.model}{Regression model for treatment mechanism (propensity score).}
-\item{sigma0}{Consistent estimate of sigma0 for different values of rho0}
-\item{sigma1}{Consistent estimate of sigma1 for different values of rho1}
-\item{DR}{DR inference, confidence intervals for different pre-specified values of \code{rho} for the OR estimator, uncertainty interval, coefficient estimates, confounding bias, indentification interval, standard error etc.}
-\item{OR}{OR inference, confidence intervals for different pre-specified values of \code{rho} for the OR estimator, uncertainty interval, coefficient estimates, confounding bias, indentification interval, standard error etc.}
+\item{sigma0}{Estimate of sigma0 for different values of rho0.}
+\item{sigma1}{Estimate of sigma1 for different values of rho1.}
+\item{DR}{DR inference, confidence intervals for different pre-specified values of \code{rho0} and \code{rho1} for the OR estimator, uncertainty interval, coefficient estimates, confounding bias, identification interval, standard error etc.}
+\item{OR}{OR inference, confidence intervals for different pre-specified values of \code{rho0} and \code{rho1} for the OR estimator, uncertainty interval, coefficient estimates, confounding bias, identification interval, standard error etc.}
+\item{XYhat}{Union of the sets of covariates selected by fitting lasso regressions to the outcome models using using covariates specified by formulas or X matrix.}
+\item{XThat}{Set of covariates selected by fitting lasso regression to the ps model using covariates specified by formulas or X matrix.}
 }
 \description{
-This function allows you to derive uncertainty intervals for the average causal effect (ACE) or the average causal effect on the treated (ACT). The function uses a regression imputation estimator and a doubly robust estimator. The uncertainty intervals can be used as a sensitivity analysis to unconfoundedness. Note that \code{rho}=0 render the same results as assuming no unobserved confounding.
+This function allows you to derive uncertainty intervals for causal parameters E(Y1), E(Y0), E(Y1|T=0), E(Y0|T=1) in an observational study with Yt being the potential outcome that would have been observed under treatment T=t. The function uses a regression imputation estimator (OR) and a doubly robust estimator (DR). The uncertainty intervals can be used as a sensitivity analysis to unconfoundedness. Note that \code{rho0}=0 and \code{rho1}=0 render the same results as assuming no unobserved confounding.
 }
 \details{
-In order to visualize the results, you can use \code{\link{plot.uicausal}}. Details about estimators can be found in Genbäck and de Luna (2018)
+In order to visualize the results, you can use \code{\link{plot.ui}}. Details about estimators can be found in Genbäck and de Luna (2018)
 
 The standard errors are calculated with the following estimators:
 
-DR ACE - simplified sandwich estimator
+DR - influence function-based estimator
 
-DR ACT - sandwich estimator
+OR - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance
 
-OR ACE - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance
+The set of covariates which are included in the outcome and propensity score models are choosed as below:
 
-OR ACT - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance
+noselection - All the covariates specified in formulas (and included in the data matrix) will be used in the respective models or the set of covariates in the X matrix will be used for all models.
+
+single - Lasso regressions will be fitted to the outcome models using covariates specified by formulas or X matrix and union of the selected sets will be used.
+
+double - Lasso regressions will be fitted to the outcome models and the propensity score model using covariates specified by formulas or X matrix and union of the selected sets will be used.
+
+refit- Lasso regressions will be fitted to the outcome models and the propensity score model using covariates specified by formulas or X matrix and union of the sets found by potential outcome models and the set found by the propensity score model will be used in refitting potential outcome and ps models with no regularizations respectively.
 }
 \examples{
 library(MASS)
-n<-500
-delta<-c(-0.3,0.65)
-rho<-0.3
-X<-cbind(rep(1,n),rnorm(n))
-x<-X[,-1]
-s0<-2
-s1<-3
-error<-mvrnorm(n, c(0,0,0), matrix(c(1,0.6,0.9,0.6,4,0.54,0.9,0.54,9), ncol=3))
-zstar<-X\%*\%delta+error[,1]
-z<- zstar>0
-y1<-ifelse(x< (-1),0.2*x-0.1*x^2, ifelse(x< 1,0.3*x, ifelse(x<3,0.4-0.1*x^2,-0.2-0.1*x)))+error[,3]
-y0<-ifelse(x<1.5, x-0.4*x^2, ifelse(x<2, -0.15-0.25*x+0.5*x^2, 1.85-0.25*x))+error[,2]
-y<-y0
-y[z==1]<-y1[z==1]
-data<-data.frame(y,z,x)
+n <- 500
+rho <- 0.3
+x <- rnorm(n)
+s0 <- 2
+s1 <- 3
+error <- mvrnorm(
+  n, c(0, 0, 0),
+  matrix(c(1, 0.6, 0.9, 0.6, 4, 0.54, 0.9, 0.54, 9), ncol = 3)
+)
+delta <- c(-0.3, 0.65)
+tstar <- cbind(1, x) \%*\% delta + error[, 1]
+t <- tstar > 0
+y1 <- -2 + x - 3 * x^2 + error[, 3]
+y0 <- 0.5 + 2 * x - x^2 + error[, 2]
+y <- y0
+y[t == 1] <- y1[t == 1]
+data <- data.frame(y, t, x)
 
-
-ui<-ui.causal(y~x, z~x, data=data, rho=c(0,0.3), ACT=FALSE)
+mean(y1 - y0)
+ui <- ui.causal(y ~ x + I(x^2), t ~ x + I(x^2),
+  data = data, rho0 = c(0, 0.4), rho1 = c(0, 0.4),
+  subset = "double", param = "ACE", sigma_correction = TRUE
+)
+ui <- ui.causal(
+  Y = y, T = t, X = cbind(x, x^2),
+  rho0 = c(0, 0.4), rho1 = c(0, 0.4),
+  subset = "double", param = "ACE", sigma_correction = TRUE
+)
 ui
 plot(ui)
-profile(ui)
-mean(y1-y0)
+ui$XYhat
+ui$XThat
 
-ui<-ui.causal(y~x, z~x, data=data, rho=c(0,0.3), ACT=TRUE)
+
+mean(y1[t == 1] - y0[t == 1])
+ui <- ui.causal(
+  Y = y, T = t, X = cbind(x, x^2),
+  rho0 = c(0, 0.4), rho1 = c(0, 0.4),
+  subset = "noselection", param = "ACT", sigma_correction = TRUE
+)
 ui
 plot(ui)
-mean(y1[z==1]-y0[z==1])
-
 }
 \references{
 Genbäck, M., de Luna, X. (2018). Causal Inference Accounting for Unobserved Confounding after Outcome Regression and Doubly Robust Estimation. \emph{Biometrics}. DOI: 10.1111/biom.13001
-}
-\author{
-Minna Genbäck
 }
