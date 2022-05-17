@@ -171,7 +171,7 @@ ui.y1t0 <- function(out.formula, y.data,
 
 
   output$call <- match.call()
-  class(output) <- "ui"
+  class(output) <- "uicausal"
 
   return(output)
 }

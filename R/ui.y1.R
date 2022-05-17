@@ -162,7 +162,7 @@ ui.y1 <- function(out.formula, y.data,
   names(output$DR$IdentInt) <- c("lower", "upper")
 
   output$call <- match.call()
-  class(output) <- "ui"
+  class(output) <- "uicausal"
 
   return(output)
 }
