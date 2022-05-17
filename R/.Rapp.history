@@ -1,0 +1,2405 @@
+pz<-dim(Xz)[2]-1
+output$OR$se<-sqrt(sandImpACT(X,y,z,BetaOLSy0,output$OR$naiv,n1,N,p))
+output$OR$se<-sqrt((2*sigma1hatOLS^2+  (BetaOLSy1-BetaOLSy0)%*%cov(X1)%*%(BetaOLSy1-BetaOLSy0))/n1)
+output$DR$se<-sqrt(sandACT(gamma,X,Xz,y,z,u,BetaOLSy0,phat,output$naiv[2],n1,n0,N,p,pz))
+library(numDeriv)
+output$DR$se<-sqrt(sandACT(gamma,X,Xz,y,z,u,BetaOLSy0,phat,output$naiv[2],n1,n0,N,p,pz))
+output$OR$se<-sqrt(sandImpACT(X,y,z,BetaOLSy0,output$OR$naiv,n1,N,p))
+output$OR$se<-sqrt((2*sigma1hatOLS^2+  (BetaOLSy1-BetaOLSy0)%*%cov(X1)%*%(BetaOLSy1-BetaOLSy0))/n1)
+output$DR$se<-sqrt(sandACT(gamma,X,Xz,y,z,u,BetaOLSy0,phat,output$DR$naiv,n1,n0,N,p,pz))
+output$OR$se<-sqrt(sandImpACE(X,y,z,BetaOLSy0,BetaOLSy1,output$OR$naiv,N,p))
+output$DR$se<-sqrt(sandACT(gamma,X,Xz,y,z,u,BetaOLSy0,phat,output$DR$naiv,n1,n0,N,p,pz))
+gamma
+X
+y
+z
+u
+BetaOLSy0
+phat
+output$DR$naiv
+output$DR
+output$DR$naiv
+output$DR$naiv<-output$naiv[1]+(sum((y1-X1%*%BetaOLSy1)/phat1)-sum((y0-X0%*%BetaOLSy0)/(1-phat0)))/N
+output$DR$naiv<-output$OR$naiv+(sum((y1-X1%*%BetaOLSy1)/phat1)-sum((y0-X0%*%BetaOLSy0)/(1-phat0)))/N
+output$DR$naiv
+##################### NAIV ESTIMATES ######################
+  phat<-pnorm(Xz%*%gamma)#
+  phat0<-phat[z==0]#
+  if(ACT==TRUE){#
+  	output$OR$naiv<-mean(y1-X1%*%BetaOLSy0)#
+  	output$DR$naiv<-output$OR$naiv-sum((y0-X0%*%BetaOLSy0)/(1-phat0))/n1#
+  }else{#
+  	output$OR$naiv<-mean(X%*%BetaOLSy1-X%*%BetaOLSy0)#
+	phat1<-phat[z==1]#
+	output$DR$naiv<-output$OR$naiv+(sum((y1-X1%*%BetaOLSy1)/phat1)-sum((y0-X0%*%BetaOLSy0)/(1-phat0)))/N#
+  }
+output$OR$se<-sqrt(sandImpACT(X,y,z,BetaOLSy0,output$OR$naiv,n1,N,p))
+output$OR$se<-sqrt((2*sigma1hatOLS^2+  (BetaOLSy1-BetaOLSy0)%*%cov(X1)%*%(BetaOLSy1-BetaOLSy0))/n1)
+output$DR$se<-sqrt(sandACT(gamma,X,Xz,y,z,u,BetaOLSy0,phat,output$DR$naiv,n1,n0,N,p,pz))
+output$OR$se<-sqrt(sandImpACE(X,y,z,BetaOLSy0,BetaOLSy1,output$OR$naiv,N,p))
+output$OR$se<-sqrt(rep(1,N)%*%X%*%(sigma1hatOLS^2*solve(t(X1)%*%X1)+sigma0hatOLS^2*solve(t(X0)%*%X0))%*%t(X)%*%rep(1,N)/N^2 + (BetaOLSy1-BetaOLSy0)%*%cov(X)%*%(BetaOLSy1-BetaOLSy0)/N)
+I<-(X%*%BetaOLSy1-X%*%BetaOLSy0+z*((y-X%*%BetaOLSy1)/phat)- (1-z)*((y-X%*%BetaOLSy0)/(1-phat)))-output$DR$naiv
+output$DR$se<-sqrt(sum(I^2))/N
+zalpha<-qnorm(1-alpha/2)
+output$OR$ci<-cbind(rep(output$OR$naiv-zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid,rep(output$OR$naiv+zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid)
+output$DR$ci<-cbind(rep(output$DR$naiv-zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid,rep(output$DR$naiv+zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid)
+colnames(output$OR$ci)<-c('lower','upper')
+output$OR$ci
+dimnames(output$OR$ci)
+#' Uncertainty intervals for Average Causal Effects#
+#'#
+#' This function allows you to derive uncertainty intervals for the average causal effect (ACE) or the average causal effect on the treated (ACT). The function uses a regression imputation estimator and a doubly robust estimator. The uncertainty intervals can be used as a sensitivity analysis to unconfoundedness. Note that \code{rho}=0 render the same results as assuming no unobserved confounding.#
+#' @param out.formula Formula for the outcome regression models#
+#' @param treat.formula Formula for the propensity score model (regression model for treatment assignment).#
+#' @param data data.frame containing the variables in the formula.#
+#' @param rho Pre-specified interval for \code{rho0} and \code{rho1}.#
+#' @param rho0 Pre-specified value of \code{rho0}, if an interval it has to be the same as \code{rho1}.#
+#' @param rho1 Pre-specified value of \code{rho1}, if an interval it has to be the same as \code{rho0}.#
+#' @param ACT If TRUE Average Causal effect of the Treated is calculated, if FALSE Average Causal effect is calculated. Default is FALSE.#
+#' @param sand Specifies which estimator of the standard errors should be used for OR, see details.#
+#' @param gridn Number of fixed points within the \code{rho} interval for which sigma0hat and sigma1hat should be estimated.#
+#' @param plot If TRUE the function runs slightly slower but you will be able to plot your results using \code{\link{plot.uicausal}}.#
+#' @param rho.plotrange an interval larger than \code{rho} for the plot using \code{\link{plot.uicausal}}.#
+#' @param alpha Default 0.05 corresponding to a confidence level of 95 for CI and UI.#
+#'#
+#'@details In order to visualize the results, you can use \code{\link{plot.uicausal}}. Details about estimators can be found in Genbäck and de Luna (2018)#
+#'#
+#'The standard errors are calculated with the following estimators:#
+#'#
+#'DR ACE - simplified sandwich estimator#
+#'#
+#'DR ACT - sandwich estimator#
+#'#
+#'OR ACE - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance#
+#'#
+#'OR ACT - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance#
+#'#
+#'#
+#' @return A list containing:#
+#' \item{call}{the matched call}#
+#' \item{gridrho}{the values of \code{rho} for which confounding bias is calculated}#
+#' \item{sigma0hat}{consistent estimate of sigma0}#
+#' \item{sigma1hat}{consistent estimate of sigma1}#
+#' \item{conf.bias}{estimated confounding bias assuming \code{rho0} and \code{rho1} is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} (\code{rho}) are pre-specified numbers}#
+#' \item{naiv}{OR and DR estimates assuming unconfoundedness (\code{rho}=0)}#
+#' \item{naivci}{confidence interval assuming unconfoundedness (\code{rho}=0)}#
+#' \item{IdentInt}{estimated identification interval assuming \code{rho0} and \code{rho1} is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} (\code{rho}) are pre-specified numbers}#
+#' \item{ciOR}{confidence intervals for different pre-specified values of \code{rho} for the OR estimator}#
+#' \item{ciDR}{confidence intervals for different pre-specified values of \code{rho} for the DR estimator}#
+#' \item{ui}{uncertainty interval assuming \code{rho0} and \code{rho1} (\code{rho}) is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} are pre-specified numbers}#
+#' \item{output$conf.bias.grid.OR}{estimated confounding bias for the OR estimator assuming \code{rho} in a pre-spciefied interval}#
+#' \item{output$conf.bias.grid.DR}{estimated confounding bias for the DR estimator assuming \code{rho} in a pre-spciefied interval}#
+#' \item{se}{standard errors of the estimators assuming \code{rho}=0. The standard error when \code{rho}!=0 is approximated with se}#
+#' \item{gridn}{number of distinct values of \code{rho} within the interval for which confounding bias is calculated}#
+#' \item{rho}{pre-specified interval for \code{rho0} and \code{rho1}}#
+#' \item{rho1}{if no interval for \code{rho}, the pre-specified value of \code{rho1}}#
+#' \item{rho0}{if no interval for \code{rho}, the pre-specified value of \code{rho0}}#
+#' @importFrom  Matrix rankMatrix#
+#'#
+#' @examples#
+#'library(MASS)#
+#'n<-500#
+#'delta<-c(-0.3,0.65)#
+#'rho<-0.3#
+#'X<-cbind(rep(1,n),rnorm(n))#
+#'x<-X[,-1]#
+#'sigma0<-2#
+#'sigma1<-3#
+#'error<-mvrnorm(n,c(0,0,0),matrix(c(1,rho*sigma0,rho*sigma1,rho*sigma0,sigma0^2,rho*rho*sigma0*sigma1,rho*sigma1,rho*rho*sigma0*sigma1,sigma1^2),ncol=3))#
+#'zstar<-X%*%delta+error[,1]#
+#'z<-as.numeric(zstar>0)#
+#'y1<-ifelse(x< (-1),0.2*x-0.1*x^2,ifelse(x< 1,0.3*x,ifelse(x<3,0.4-0.1*x^2,-0.2-0.1*x)))+error[,3]#
+#'y0<-ifelse(x< (1.5),(0.15-x-0.4*x^2),ifelse(x<1,1.5-x+0.5*x^2+x^3,ifelse(x<2,1.75-0.25*x+0.5*x^2,2.25+0.5*x)))+error[,2]#
+#'mean(y1-y0)#
+#'y<-y0#
+#'y[z==1]<-y1[z==1]#
+#'data<-data.frame(y,z,x)#
+#'#
+#'#
+#'ui<-ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)#
+#'ui#
+#'plot(ui)#
+#'#
+#' @export#
+#
+ui.causal<-function(out.formula,treat.formula,data,rho=c(-0.3,0.3),rho0=rho,rho1=rho0,ACT=FALSE, sand=TRUE,gridn=21, plot=TRUE, #
+rho.plotrange=c(-0.5,0.5), alpha=0.05){#
+ ###Warnings#
+ if(class(data)!="data.frame"){#
+	stop('Data must be a data frame')#
+  }#
+  y.data<-get_all_vars(out.formula,data=data)#
+  z.data<-get_all_vars(treat.formula,data=data)#
+#  remove individuals with partial missing data in the covariates#
+  if(sum(complete.cases(y.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates! ',sum(complete.cases(y.data)==FALSE),'individual(s) are removed from the outcome regression.'))#
+	y.data<-y.data[complete.cases(y.data),]#
+  }#
+  if(sum(complete.cases(z.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates. ',sum(complete.cases(z.data)==FALSE),'individual(s) are removed from the propensity score regression.'))#
+	z.data<-z.data[complete.cases(z.data),]#
+  }#
+	if(plot==TRUE){#
+    if((length(rho0)>1|length(rho1)>1)&sum(rho0!=rho1)>0){#
+    	warning('In order to plot results rho0 and rho1 must be the same interval, plot changed to FALSE.')#
+    	plot=FALSE#
+    	}#
+	if(min(rho.plotrange)>=min(rho)){#
+	#	warning('Lower bound of plotrange is >= lower bound of UI, it needs to be less than. You will not be able to plot this object.')#
+		rho.plotrange[1]=(min(rho)-1)/2}#
+	if(max(rho.plotrange)<=max(rho)){#
+		#warning('Upper bound of plotrange is <= upper bound of UI, it needs to be greater than. You will not be able to plot this object.')#
+		rho.plotrange[2]=(max(rho)+1)/2}#
+	}#
+  out.model0<-lm(out.formula,data=y.data[z==0,])  #
+  out.model1<-lm(out.formula,data=y.data[z==1,])  #
+  treat.model<-glm(treat.formula,family=binomial(link="probit"),data=z.data)#
+  z<-z.data[,1]#
+  y<-y.data[,1]#
+  y0<-y[z==0]#
+  y1<-y[z==1]#
+  X1<-model.matrix(out.model1)#
+  X0<-model.matrix(out.model0)#
+  Xz<-model.matrix(treat.model)#
+#
+  d0<-dim(X0)#
+  d1<-dim(X1)#
+  n0<-d0[1]#
+  n1<-d1[1]#
+  N<-n0+n1#
+  p<-d0[2]-1#
+  pz<-dim(Xz)[2]-1#
+  #estimating delta, u and alpha0#
+  gamma<-coef(summary(treat.model))[,1]#
+  #Estimating BetaOLS untreated#
+  BetaOLSy0<-coef(summary(out.model0))[,1]#
+  varBetaOLSy0<-diag((coef(summary(out.model0))[,2])^2)#
+  sigma0hatOLS<-summary(out.model0)$sigma#
+#
+  u<-(Xz%*%gamma)#
+  u0<-(Xz[z==0,]%*%gamma)#
+  u1<-(Xz[z==1,]%*%gamma)#
+  OLSlambda0<-solve(t(X0)%*%X0)%*%t(X0)%*%lambda0(u0)#
+  l0z0<-mean(lambda0(u0))#
+  l0<-mean(lambda0(u))#
+  OLSlambda1<-solve(t(X1)%*%X1)%*%t(X1)%*%lambda1(u1)#
+  l1z1<-mean(lambda1(u1))#
+  l1<-mean(lambda1(u))#
+  output<-list()#
+  t0<-gridrho.f(rho0,gridn,rho.plotrange,plot)#
+  gridrho0<-t0[[1]]#
+  nui0<-t0[[2]]#
+  t1<-gridrho.f(rho1,gridn,rho.plotrange,plot)#
+  gridrho1<-t1[[1]]#
+  nui1<-t1[[2]]#
+  output$sigma0hat<-sigmaOLScor0(X0,sigma0hatOLS,n0,p,u0,gridrho0)#
+  output$rho0<-rho0#
+  if(ACT==FALSE){#
+  output$rho1<-rho1#
+  #Estimating BetaOLS treated#
+  BetaOLSy1<-coef(summary(out.model1))[,1]#
+  varBetaOLSy1<-diag((coef(summary(out.model1))[,2])^2)#
+  sigma1hatOLS<-summary(out.model1)$sigma#
+  output$sigma1hat<-sigmaOLScor1(X1,sigma1hatOLS,n1,p,u1,gridrho1)#
+  }#
+  output$DR$conf.bias<-vector(length=2)#
+  names(output$DR$conf.bias)<-c('Min', 'Max')#
+  output$DR$IdentInt<-output$DR$conf.bias#
+  output$DR$ui<-output$DR$conf.bias#
+  output$DR$naivci<-output$DR$conf.bias#
+  output$OR<-output$DR#
+  ##################### NAIV ESTIMATES ######################
+  phat<-pnorm(Xz%*%gamma)#
+  phat0<-phat[z==0]#
+  if(ACT==TRUE){#
+  	output$OR$naiv<-mean(y1-X1%*%BetaOLSy0)#
+  	output$DR$naiv<-output$OR$naiv-sum((y0-X0%*%BetaOLSy0)/(1-phat0))/n1#
+  }else{#
+  	output$OR$naiv<-mean(X%*%BetaOLSy1-X%*%BetaOLSy0)#
+	phat1<-phat[z==1]#
+	output$DR$naiv<-output$OR$naiv+(sum((y1-X1%*%BetaOLSy1)/phat1)-sum((y0-X0%*%BetaOLSy0)/(1-phat0)))/N#
+  }#
+	##################### CONFOUNDING BIAS ######################
+	exgz1<-rep(1,n1)%*%X1/n1#
+	exgz0<-rep(1,n0)%*%X0/n0#
+	if(ACT==TRUE){#
+	#Counfounding bias regression imputation ACT#
+	f<-gridrho0*output$sigma0hat*c(l1z1+exgz1%*%OLSlambda0)#
+	output$OR$conf.bias.grid<-f#
+	output$OR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	#Total bias DR ACT#
+	f<-gridrho0*output$sigma0hat*l0*N/n1#
+	output$DR$conf.bias.grid<-f#
+	output$DR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	}else{#
+	#Counfounding bias regression imputation ACE#
+	f1<-gridrho1*output$sigma1hat*c(rep(1,N)%*%X%*%OLSlambda1)/N#
+	f2<-gridrho0*output$sigma0hat*c(rep(1,N)%*%X%*%OLSlambda0)/N#
+	output$OR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	rownames(output$OR$conf.bias.grid)<-as.character(gridrho1)#
+	colnames(output$OR$conf.bias.grid)<-as.character(gridrho0)#
+	output$OR$conf.bias<-c(min(output$OR$conf.bias.grid[nui1,nui0]),max(output$OR$conf.bias.grid[nui1,nui0]))#
+	#Total bias DR ACE#
+	f1<-gridrho1*output$sigma1hat*l1#
+	f2<-gridrho0*output$sigma0hat*l0#
+	#Want the same rownames and colnames as output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	output$DR$conf.bias<-c(min(output$DR$conf.bias.grid[nui1,nui0]),max(output$DR$conf.bias.grid[nui1,nui0]))#
+	}#
+	#Identification interval, NAIV ESTIMATES - BIAS (interval)#
+	output$OR$IdentInt<-rep(output$OR$naiv,2)-output$OR$conf.bias[2:1]#
+	output$DR$IdentInt<-rep(output$DR$naiv,2)-output$DR$conf.bias[2:1]#
+	#Coef, NAIV ESTIMATES - BIAS (for each value of rho)#
+	#Want the same rownames and colnames as conf.bias.grid#
+	output$DR$coef<-output$DR$conf.bias.grid#
+	output$DR$coef<-array(data=output$DR$naiv,dim=dim(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$coef<-output$OR$conf.bias.grid#
+	output$OR$coef<-array(data=output$OR$naiv,dim=dim(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	#Standard errors#
+	if(ACT==TRUE){#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACT(X,y,z,BetaOLSy0,output$OR$naiv,n1,N,p))#
+		}else{#
+		output$OR$se<-sqrt((2*sigma1hatOLS^2+  (BetaOLSy1-BetaOLSy0)%*%cov(X1)%*%(BetaOLSy1-BetaOLSy0))/n1)#
+		}#
+		output$DR$se<-sqrt(sandACT(gamma,X,Xz,y,z,u,BetaOLSy0,phat,output$DR$naiv,n1,n0,N,p,pz))#
+	}else{#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACE(X,y,z,BetaOLSy0,BetaOLSy1,output$OR$naiv,N,p))#
+			}else{#
+		output$OR$se<-sqrt(rep(1,N)%*%X%*%(sigma1hatOLS^2*solve(t(X1)%*%X1)+sigma0hatOLS^2*solve(t(X0)%*%X0))%*%t(X)%*%rep(1,N)/N^2 + (BetaOLSy1-BetaOLSy0)%*%cov(X)%*%(BetaOLSy1-BetaOLSy0)/N)	#
+			}#
+		I<-(X%*%BetaOLSy1-X%*%BetaOLSy0+z*((y-X%*%BetaOLSy1)/phat)- (1-z)*((y-X%*%BetaOLSy0)/(1-phat)))-output$DR$naiv#
+		output$DR$se<-sqrt(sum(I^2))/N#
+		}#
+	zalpha<-qnorm(1-alpha/2)#
+	#Confidence intervals#
+	output$OR$ci<-cbind(rep(output$OR$naiv-zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid,rep(output$OR$naiv+zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid)#
+	output$DR$ci<-cbind(rep(output$DR$naiv-zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid,rep(output$DR$naiv+zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid)#
+	colnames(output$OR$ci)<-c('lower','upper')#
+	colnames(output$DR$ci)<-c('lower','upper')#
+	rownames(output$OR$ci)<-as.character(gridrho)#
+	rownames(output$DR$ci)<-as.character(gridrho)#
+	output$OR$ui<-output$OR$IdentInt+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$ui<-output$DR$IdentInt+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$OR$naivci<-output$OR$naiv+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$naivci<-output$DR$naiv+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$gridn<-gridn#
+	output$call <- match.call()#
+	class(output)<-"uicausal"#
+return(output)#
+}
+ui<-ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)
+output$OR$conf.bias.grid
+output$OR$ci<-array(dim=c(dim=c(output$OR$conf.bias.grid),2),dimnames=list(dimnames(output$OR$conf.bias.grid),c('lower','upper'))
+output$OR$ci<-array(dim=c(dim=c(output$OR$conf.bias.grid),2),dimnames=list(dimnames(output$OR$conf.bias.grid),c('lower','upper')))
+c(dim=c(output$OR$conf.bias.grid),2)
+c(dim(output$OR$conf.bias.grid),2)
+list(dimnames(output$OR$conf.bias.grid),c('lower','upper'))
+output$OR$ci<-array(dim=c(dim=c(dim(output$OR$conf.bias.grid),2),dimnames=list(dimnames(output$OR$conf.bias.grid),c('lower','upper')))
+output$OR$ci<-array(dim=c(dim=c(dim(output$OR$conf.bias.grid),2)),dimnames=list(dimnames(output$OR$conf.bias.grid),c('lower','upper')))
+c(dim=c(dim(output$OR$conf.bias.grid),2))
+list(dimnames(output$OR$conf.bias.grid),c('lower','upper'))
+dnames<-dimnames(output$OR$conf.bias.grid)
+dnames<-dimnames(output$OR$conf.bias.grid)#
+	dnames[[3]]<-c('lower','upper')
+dnames
+output$OR$ci<-array(dim=c(dim=c(dim(output$OR$conf.bias.grid),2)),dimnames=dnames)
+output$OR$ci<-cbind(rep(output$OR$naiv-zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid,rep(output$OR$naiv+zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid)
+output$OR$ci<-array(dim=c(dim=c(dim(output$OR$conf.bias.grid),2)),dimnames=dnames)
+output$OR$ci[,,1]<-rep(output$OR$naiv-zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid
+output$OR$ci[,,2]<-rep(output$OR$naiv+zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid)
+output$OR$ci[,,2]<-rep(output$OR$naiv+zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid
+output$OR$ci
+output$DR$ci[,,1]<-rep(output$DR$naiv-zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid
+output$DR$ci<-output$OR$ci
+output$DR$ci[,,1]<-rep(output$DR$naiv-zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid
+output$DR$ci[,,2]<-rep(output$DR$naiv+zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid
+output$OR$ui<-output$OR$IdentInt+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)
+output$DR$ui<-output$DR$IdentInt+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)
+output$OR$naivci<-output$OR$naiv+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)
+output$DR$naivci<-output$DR$naiv+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)
+output$gridn<-gridn
+#' Uncertainty intervals for Average Causal Effects#
+#'#
+#' This function allows you to derive uncertainty intervals for the average causal effect (ACE) or the average causal effect on the treated (ACT). The function uses a regression imputation estimator and a doubly robust estimator. The uncertainty intervals can be used as a sensitivity analysis to unconfoundedness. Note that \code{rho}=0 render the same results as assuming no unobserved confounding.#
+#' @param out.formula Formula for the outcome regression models#
+#' @param treat.formula Formula for the propensity score model (regression model for treatment assignment).#
+#' @param data data.frame containing the variables in the formula.#
+#' @param rho Pre-specified interval for \code{rho0} and \code{rho1}.#
+#' @param rho0 Pre-specified value of \code{rho0}, if an interval it has to be the same as \code{rho1}.#
+#' @param rho1 Pre-specified value of \code{rho1}, if an interval it has to be the same as \code{rho0}.#
+#' @param ACT If TRUE Average Causal effect of the Treated is calculated, if FALSE Average Causal effect is calculated. Default is FALSE.#
+#' @param sand Specifies which estimator of the standard errors should be used for OR, see details.#
+#' @param gridn Number of fixed points within the \code{rho} interval for which sigma0hat and sigma1hat should be estimated.#
+#' @param plot If TRUE the function runs slightly slower but you will be able to plot your results using \code{\link{plot.uicausal}}.#
+#' @param rho.plotrange an interval larger than \code{rho} for the plot using \code{\link{plot.uicausal}}.#
+#' @param alpha Default 0.05 corresponding to a confidence level of 95 for CI and UI.#
+#'#
+#'@details In order to visualize the results, you can use \code{\link{plot.uicausal}}. Details about estimators can be found in Genbäck and de Luna (2018)#
+#'#
+#'The standard errors are calculated with the following estimators:#
+#'#
+#'DR ACE - simplified sandwich estimator#
+#'#
+#'DR ACT - sandwich estimator#
+#'#
+#'OR ACE - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance#
+#'#
+#'OR ACT - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance#
+#'#
+#'#
+#' @return A list containing:#
+#' \item{call}{the matched call}#
+#' \item{gridrho}{the values of \code{rho} for which confounding bias is calculated}#
+#' \item{sigma0hat}{consistent estimate of sigma0}#
+#' \item{sigma1hat}{consistent estimate of sigma1}#
+#' \item{conf.bias}{estimated confounding bias assuming \code{rho0} and \code{rho1} is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} (\code{rho}) are pre-specified numbers}#
+#' \item{naiv}{OR and DR estimates assuming unconfoundedness (\code{rho}=0)}#
+#' \item{naivci}{confidence interval assuming unconfoundedness (\code{rho}=0)}#
+#' \item{IdentInt}{estimated identification interval assuming \code{rho0} and \code{rho1} is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} (\code{rho}) are pre-specified numbers}#
+#' \item{ciOR}{confidence intervals for different pre-specified values of \code{rho} for the OR estimator}#
+#' \item{ciDR}{confidence intervals for different pre-specified values of \code{rho} for the DR estimator}#
+#' \item{ui}{uncertainty interval assuming \code{rho0} and \code{rho1} (\code{rho}) is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} are pre-specified numbers}#
+#' \item{output$conf.bias.grid.OR}{estimated confounding bias for the OR estimator assuming \code{rho} in a pre-spciefied interval}#
+#' \item{output$conf.bias.grid.DR}{estimated confounding bias for the DR estimator assuming \code{rho} in a pre-spciefied interval}#
+#' \item{se}{standard errors of the estimators assuming \code{rho}=0. The standard error when \code{rho}!=0 is approximated with se}#
+#' \item{gridn}{number of distinct values of \code{rho} within the interval for which confounding bias is calculated}#
+#' \item{rho}{pre-specified interval for \code{rho0} and \code{rho1}}#
+#' \item{rho1}{if no interval for \code{rho}, the pre-specified value of \code{rho1}}#
+#' \item{rho0}{if no interval for \code{rho}, the pre-specified value of \code{rho0}}#
+#' @importFrom  Matrix rankMatrix#
+#'#
+#' @examples#
+#'library(MASS)#
+#'n<-500#
+#'delta<-c(-0.3,0.65)#
+#'rho<-0.3#
+#'X<-cbind(rep(1,n),rnorm(n))#
+#'x<-X[,-1]#
+#'sigma0<-2#
+#'sigma1<-3#
+#'error<-mvrnorm(n,c(0,0,0),matrix(c(1,rho*sigma0,rho*sigma1,rho*sigma0,sigma0^2,rho*rho*sigma0*sigma1,rho*sigma1,rho*rho*sigma0*sigma1,sigma1^2),ncol=3))#
+#'zstar<-X%*%delta+error[,1]#
+#'z<-as.numeric(zstar>0)#
+#'y1<-ifelse(x< (-1),0.2*x-0.1*x^2,ifelse(x< 1,0.3*x,ifelse(x<3,0.4-0.1*x^2,-0.2-0.1*x)))+error[,3]#
+#'y0<-ifelse(x< (1.5),(0.15-x-0.4*x^2),ifelse(x<1,1.5-x+0.5*x^2+x^3,ifelse(x<2,1.75-0.25*x+0.5*x^2,2.25+0.5*x)))+error[,2]#
+#'mean(y1-y0)#
+#'y<-y0#
+#'y[z==1]<-y1[z==1]#
+#'data<-data.frame(y,z,x)#
+#'#
+#'#
+#'ui<-ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)#
+#'ui#
+#'plot(ui)#
+#'#
+#' @export#
+#
+ui.causal<-function(out.formula,treat.formula,data,rho=c(-0.3,0.3),rho0=rho,rho1=rho0,ACT=FALSE, sand=TRUE,gridn=21, plot=TRUE, #
+rho.plotrange=c(-0.5,0.5), alpha=0.05){#
+ ###Warnings#
+ if(class(data)!="data.frame"){#
+	stop('Data must be a data frame')#
+  }#
+  y.data<-get_all_vars(out.formula,data=data)#
+  z.data<-get_all_vars(treat.formula,data=data)#
+#  remove individuals with partial missing data in the covariates#
+  if(sum(complete.cases(y.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates! ',sum(complete.cases(y.data)==FALSE),'individual(s) are removed from the outcome regression.'))#
+	y.data<-y.data[complete.cases(y.data),]#
+  }#
+  if(sum(complete.cases(z.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates. ',sum(complete.cases(z.data)==FALSE),'individual(s) are removed from the propensity score regression.'))#
+	z.data<-z.data[complete.cases(z.data),]#
+  }#
+	if(plot==TRUE){#
+    if((length(rho0)>1|length(rho1)>1)&sum(rho0!=rho1)>0){#
+    	warning('In order to plot results rho0 and rho1 must be the same interval, plot changed to FALSE.')#
+    	plot=FALSE#
+    	}#
+	if(min(rho.plotrange)>=min(rho)){#
+	#	warning('Lower bound of plotrange is >= lower bound of UI, it needs to be less than. You will not be able to plot this object.')#
+		rho.plotrange[1]=(min(rho)-1)/2}#
+	if(max(rho.plotrange)<=max(rho)){#
+		#warning('Upper bound of plotrange is <= upper bound of UI, it needs to be greater than. You will not be able to plot this object.')#
+		rho.plotrange[2]=(max(rho)+1)/2}#
+	}#
+  out.model0<-lm(out.formula,data=y.data[z==0,])  #
+  out.model1<-lm(out.formula,data=y.data[z==1,])  #
+  treat.model<-glm(treat.formula,family=binomial(link="probit"),data=z.data)#
+  z<-z.data[,1]#
+  y<-y.data[,1]#
+  y0<-y[z==0]#
+  y1<-y[z==1]#
+  X1<-model.matrix(out.model1)#
+  X0<-model.matrix(out.model0)#
+  Xz<-model.matrix(treat.model)#
+#
+  d0<-dim(X0)#
+  d1<-dim(X1)#
+  n0<-d0[1]#
+  n1<-d1[1]#
+  N<-n0+n1#
+  p<-d0[2]-1#
+  pz<-dim(Xz)[2]-1#
+  #estimating delta, u and alpha0#
+  gamma<-coef(summary(treat.model))[,1]#
+  #Estimating BetaOLS untreated#
+  BetaOLSy0<-coef(summary(out.model0))[,1]#
+  varBetaOLSy0<-diag((coef(summary(out.model0))[,2])^2)#
+  sigma0hatOLS<-summary(out.model0)$sigma#
+#
+  u<-(Xz%*%gamma)#
+  u0<-(Xz[z==0,]%*%gamma)#
+  u1<-(Xz[z==1,]%*%gamma)#
+  OLSlambda0<-solve(t(X0)%*%X0)%*%t(X0)%*%lambda0(u0)#
+  l0z0<-mean(lambda0(u0))#
+  l0<-mean(lambda0(u))#
+  OLSlambda1<-solve(t(X1)%*%X1)%*%t(X1)%*%lambda1(u1)#
+  l1z1<-mean(lambda1(u1))#
+  l1<-mean(lambda1(u))#
+  output<-list()#
+  t0<-gridrho.f(rho0,gridn,rho.plotrange,plot)#
+  gridrho0<-t0[[1]]#
+  nui0<-t0[[2]]#
+  t1<-gridrho.f(rho1,gridn,rho.plotrange,plot)#
+  gridrho1<-t1[[1]]#
+  nui1<-t1[[2]]#
+  output$sigma0hat<-sigmaOLScor0(X0,sigma0hatOLS,n0,p,u0,gridrho0)#
+  output$rho0<-rho0#
+  if(ACT==FALSE){#
+  output$rho1<-rho1#
+  #Estimating BetaOLS treated#
+  BetaOLSy1<-coef(summary(out.model1))[,1]#
+  varBetaOLSy1<-diag((coef(summary(out.model1))[,2])^2)#
+  sigma1hatOLS<-summary(out.model1)$sigma#
+  output$sigma1hat<-sigmaOLScor1(X1,sigma1hatOLS,n1,p,u1,gridrho1)#
+  }#
+  output$DR$conf.bias<-vector(length=2)#
+  names(output$DR$conf.bias)<-c('Min', 'Max')#
+  output$DR$IdentInt<-output$DR$conf.bias#
+  output$DR$ui<-output$DR$conf.bias#
+  output$DR$naivci<-output$DR$conf.bias#
+  output$OR<-output$DR#
+  ##################### NAIV ESTIMATES ######################
+  phat<-pnorm(Xz%*%gamma)#
+  phat0<-phat[z==0]#
+  if(ACT==TRUE){#
+  	output$OR$naiv<-mean(y1-X1%*%BetaOLSy0)#
+  	output$DR$naiv<-output$OR$naiv-sum((y0-X0%*%BetaOLSy0)/(1-phat0))/n1#
+  }else{#
+  	output$OR$naiv<-mean(X%*%BetaOLSy1-X%*%BetaOLSy0)#
+	phat1<-phat[z==1]#
+	output$DR$naiv<-output$OR$naiv+(sum((y1-X1%*%BetaOLSy1)/phat1)-sum((y0-X0%*%BetaOLSy0)/(1-phat0)))/N#
+  }#
+	##################### CONFOUNDING BIAS ######################
+	exgz1<-rep(1,n1)%*%X1/n1#
+	exgz0<-rep(1,n0)%*%X0/n0#
+	if(ACT==TRUE){#
+	#Counfounding bias regression imputation ACT#
+	f<-gridrho0*output$sigma0hat*c(l1z1+exgz1%*%OLSlambda0)#
+	output$OR$conf.bias.grid<-f#
+	output$OR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	#Total bias DR ACT#
+	f<-gridrho0*output$sigma0hat*l0*N/n1#
+	output$DR$conf.bias.grid<-f#
+	output$DR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	}else{#
+	#Counfounding bias regression imputation ACE#
+	f1<-gridrho1*output$sigma1hat*c(rep(1,N)%*%X%*%OLSlambda1)/N#
+	f2<-gridrho0*output$sigma0hat*c(rep(1,N)%*%X%*%OLSlambda0)/N#
+	output$OR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	rownames(output$OR$conf.bias.grid)<-as.character(gridrho1)#
+	colnames(output$OR$conf.bias.grid)<-as.character(gridrho0)#
+	output$OR$conf.bias<-c(min(output$OR$conf.bias.grid[nui1,nui0]),max(output$OR$conf.bias.grid[nui1,nui0]))#
+	#Total bias DR ACE#
+	f1<-gridrho1*output$sigma1hat*l1#
+	f2<-gridrho0*output$sigma0hat*l0#
+	#Want the same rownames and colnames as output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	output$DR$conf.bias<-c(min(output$DR$conf.bias.grid[nui1,nui0]),max(output$DR$conf.bias.grid[nui1,nui0]))#
+	}#
+	#Identification interval, NAIV ESTIMATES - BIAS (interval)#
+	output$OR$IdentInt<-rep(output$OR$naiv,2)-output$OR$conf.bias[2:1]#
+	output$DR$IdentInt<-rep(output$DR$naiv,2)-output$DR$conf.bias[2:1]#
+	#Coef, NAIV ESTIMATES - BIAS (for each value of rho)#
+	#Want the same rownames and colnames as conf.bias.grid#
+	output$DR$coef<-output$DR$conf.bias.grid#
+	output$DR$coef<-array(data=output$DR$naiv,dim=dim(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$coef<-output$OR$conf.bias.grid#
+	output$OR$coef<-array(data=output$OR$naiv,dim=dim(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	#Standard errors#
+	if(ACT==TRUE){#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACT(X,y,z,BetaOLSy0,output$OR$naiv,n1,N,p))#
+		}else{#
+		output$OR$se<-sqrt((2*sigma1hatOLS^2+  (BetaOLSy1-BetaOLSy0)%*%cov(X1)%*%(BetaOLSy1-BetaOLSy0))/n1)#
+		}#
+		output$DR$se<-sqrt(sandACT(gamma,X,Xz,y,z,u,BetaOLSy0,phat,output$DR$naiv,n1,n0,N,p,pz))#
+	}else{#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACE(X,y,z,BetaOLSy0,BetaOLSy1,output$OR$naiv,N,p))#
+			}else{#
+		output$OR$se<-sqrt(rep(1,N)%*%X%*%(sigma1hatOLS^2*solve(t(X1)%*%X1)+sigma0hatOLS^2*solve(t(X0)%*%X0))%*%t(X)%*%rep(1,N)/N^2 + (BetaOLSy1-BetaOLSy0)%*%cov(X)%*%(BetaOLSy1-BetaOLSy0)/N)	#
+			}#
+		I<-(X%*%BetaOLSy1-X%*%BetaOLSy0+z*((y-X%*%BetaOLSy1)/phat)- (1-z)*((y-X%*%BetaOLSy0)/(1-phat)))-output$DR$naiv#
+		output$DR$se<-sqrt(sum(I^2))/N#
+		}#
+	zalpha<-qnorm(1-alpha/2)#
+	#Confidence intervals#
+	dnames<-dimnames(output$OR$conf.bias.grid)#
+	dnames[[3]]<-c('lower','upper')#
+	output$OR$ci<-array(dim=c(dim=c(dim(output$OR$conf.bias.grid),2)),dimnames=dnames)#
+	output$OR$ci[,,1]<-rep(output$OR$naiv-zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	output$OR$ci[,,2]<-rep(output$OR$naiv+zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	output$DR$ci<-output$OR$ci#
+	output$DR$ci[,,1]<-rep(output$DR$naiv-zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$DR$ci[,,2]<-rep(output$DR$naiv+zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$ui<-output$OR$IdentInt+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$ui<-output$DR$IdentInt+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$OR$naivci<-output$OR$naiv+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$naivci<-output$DR$naiv+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$gridn<-gridn#
+	output$call <- match.call()#
+	class(output)<-"uicausal"#
+return(output)#
+}
+ui<-ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)
+ui
+ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)
+###Warnings#
+ if(class(data)!="data.frame"){#
+	stop('Data must be a data frame')#
+  }#
+  y.data<-get_all_vars(out.formula,data=data)#
+  z.data<-get_all_vars(treat.formula,data=data)#
+#  remove individuals with partial missing data in the covariates#
+  if(sum(complete.cases(y.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates! ',sum(complete.cases(y.data)==FALSE),'individual(s) are removed from the outcome regression.'))#
+	y.data<-y.data[complete.cases(y.data),]#
+  }#
+  if(sum(complete.cases(z.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates. ',sum(complete.cases(z.data)==FALSE),'individual(s) are removed from the propensity score regression.'))#
+	z.data<-z.data[complete.cases(z.data),]#
+  }#
+	if(plot==TRUE){#
+    if((length(rho0)>1|length(rho1)>1)&sum(rho0!=rho1)>0){#
+    	warning('In order to plot results rho0 and rho1 must be the same interval, plot changed to FALSE.')#
+    	plot=FALSE#
+    	}#
+	if(min(rho.plotrange)>=min(rho)){#
+	#	warning('Lower bound of plotrange is >= lower bound of UI, it needs to be less than. You will not be able to plot this object.')#
+		rho.plotrange[1]=(min(rho)-1)/2}#
+	if(max(rho.plotrange)<=max(rho)){#
+		#warning('Upper bound of plotrange is <= upper bound of UI, it needs to be greater than. You will not be able to plot this object.')#
+		rho.plotrange[2]=(max(rho)+1)/2}#
+	}#
+  out.model0<-lm(out.formula,data=y.data[z==0,])  #
+  out.model1<-lm(out.formula,data=y.data[z==1,])  #
+  treat.model<-glm(treat.formula,family=binomial(link="probit"),data=z.data)
+z<-z.data[,1]#
+  y<-y.data[,1]#
+  y0<-y[z==0]#
+  y1<-y[z==1]#
+  X1<-model.matrix(out.model1)#
+  X0<-model.matrix(out.model0)#
+  Xz<-model.matrix(treat.model)#
+#
+  d0<-dim(X0)#
+  d1<-dim(X1)#
+  n0<-d0[1]#
+  n1<-d1[1]#
+  N<-n0+n1#
+  p<-d0[2]-1#
+  pz<-dim(Xz)[2]-1#
+  #estimating delta, u and alpha0#
+  gamma<-coef(summary(treat.model))[,1]#
+  #Estimating BetaOLS untreated#
+  BetaOLSy0<-coef(summary(out.model0))[,1]#
+  varBetaOLSy0<-diag((coef(summary(out.model0))[,2])^2)#
+  sigma0hatOLS<-summary(out.model0)$sigma#
+#
+  u<-(Xz%*%gamma)#
+  u0<-(Xz[z==0,]%*%gamma)#
+  u1<-(Xz[z==1,]%*%gamma)#
+  OLSlambda0<-solve(t(X0)%*%X0)%*%t(X0)%*%lambda0(u0)#
+  l0z0<-mean(lambda0(u0))#
+  l0<-mean(lambda0(u))#
+  OLSlambda1<-solve(t(X1)%*%X1)%*%t(X1)%*%lambda1(u1)#
+  l1z1<-mean(lambda1(u1))#
+  l1<-mean(lambda1(u))
+output<-list()#
+  t0<-gridrho.f(rho0,gridn,rho.plotrange,plot)#
+  gridrho0<-t0[[1]]#
+  nui0<-t0[[2]]#
+  t1<-gridrho.f(rho1,gridn,rho.plotrange,plot)#
+  gridrho1<-t1[[1]]#
+  nui1<-t1[[2]]#
+  output$sigma0hat<-sigmaOLScor0(X0,sigma0hatOLS,n0,p,u0,gridrho0)#
+  output$rho0<-rho0#
+  if(ACT==FALSE){#
+  output$rho1<-rho1#
+  #Estimating BetaOLS treated#
+  BetaOLSy1<-coef(summary(out.model1))[,1]#
+  varBetaOLSy1<-diag((coef(summary(out.model1))[,2])^2)#
+  sigma1hatOLS<-summary(out.model1)$sigma#
+  output$sigma1hat<-sigmaOLScor1(X1,sigma1hatOLS,n1,p,u1,gridrho1)#
+  }#
+  output$DR$conf.bias<-vector(length=2)#
+  names(output$DR$conf.bias)<-c('Min', 'Max')#
+  output$DR$IdentInt<-output$DR$conf.bias#
+  output$DR$ui<-output$DR$conf.bias#
+  output$DR$naivci<-output$DR$conf.bias#
+  output$OR<-output$DR
+##################### NAIV ESTIMATES ######################
+  phat<-pnorm(Xz%*%gamma)#
+  phat0<-phat[z==0]#
+  if(ACT==TRUE){#
+  	output$OR$naiv<-mean(y1-X1%*%BetaOLSy0)#
+  	output$DR$naiv<-output$OR$naiv-sum((y0-X0%*%BetaOLSy0)/(1-phat0))/n1#
+  }else{#
+  	output$OR$naiv<-mean(X%*%BetaOLSy1-X%*%BetaOLSy0)#
+	phat1<-phat[z==1]#
+	output$DR$naiv<-output$OR$naiv+(sum((y1-X1%*%BetaOLSy1)/phat1)-sum((y0-X0%*%BetaOLSy0)/(1-phat0)))/N#
+  }#
+	##################### CONFOUNDING BIAS ######################
+	exgz1<-rep(1,n1)%*%X1/n1#
+	exgz0<-rep(1,n0)%*%X0/n0#
+	if(ACT==TRUE){#
+	#Counfounding bias regression imputation ACT#
+	f<-gridrho0*output$sigma0hat*c(l1z1+exgz1%*%OLSlambda0)#
+	output$OR$conf.bias.grid<-f#
+	output$OR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	#Total bias DR ACT#
+	f<-gridrho0*output$sigma0hat*l0*N/n1#
+	output$DR$conf.bias.grid<-f#
+	output$DR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	}else{#
+	#Counfounding bias regression imputation ACE#
+	f1<-gridrho1*output$sigma1hat*c(rep(1,N)%*%X%*%OLSlambda1)/N#
+	f2<-gridrho0*output$sigma0hat*c(rep(1,N)%*%X%*%OLSlambda0)/N#
+	output$OR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	rownames(output$OR$conf.bias.grid)<-as.character(gridrho1)#
+	colnames(output$OR$conf.bias.grid)<-as.character(gridrho0)#
+	output$OR$conf.bias<-c(min(output$OR$conf.bias.grid[nui1,nui0]),max(output$OR$conf.bias.grid[nui1,nui0]))#
+	#Total bias DR ACE#
+	f1<-gridrho1*output$sigma1hat*l1#
+	f2<-gridrho0*output$sigma0hat*l0#
+	#Want the same rownames and colnames as output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	output$DR$conf.bias<-c(min(output$DR$conf.bias.grid[nui1,nui0]),max(output$DR$conf.bias.grid[nui1,nui0]))#
+	}
+#Identification interval, NAIV ESTIMATES - BIAS (interval)#
+	output$OR$IdentInt<-rep(output$OR$naiv,2)-output$OR$conf.bias[2:1]#
+	output$DR$IdentInt<-rep(output$DR$naiv,2)-output$DR$conf.bias[2:1]#
+	#Coef, NAIV ESTIMATES - BIAS (for each value of rho)#
+	#Want the same rownames and colnames as conf.bias.grid#
+	output$DR$coef<-output$DR$conf.bias.grid#
+	output$DR$coef<-array(data=output$DR$naiv,dim=dim(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$coef<-output$OR$conf.bias.grid#
+	output$OR$coef<-array(data=output$OR$naiv,dim=dim(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	#Standard errors#
+	if(ACT==TRUE){#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACT(X,y,z,BetaOLSy0,output$OR$naiv,n1,N,p))#
+		}else{#
+		output$OR$se<-sqrt((2*sigma1hatOLS^2+  (BetaOLSy1-BetaOLSy0)%*%cov(X1)%*%(BetaOLSy1-BetaOLSy0))/n1)#
+		}#
+		output$DR$se<-sqrt(sandACT(gamma,X,Xz,y,z,u,BetaOLSy0,phat,output$DR$naiv,n1,n0,N,p,pz))#
+	}else{#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACE(X,y,z,BetaOLSy0,BetaOLSy1,output$OR$naiv,N,p))#
+			}else{#
+		output$OR$se<-sqrt(rep(1,N)%*%X%*%(sigma1hatOLS^2*solve(t(X1)%*%X1)+sigma0hatOLS^2*solve(t(X0)%*%X0))%*%t(X)%*%rep(1,N)/N^2 + (BetaOLSy1-BetaOLSy0)%*%cov(X)%*%(BetaOLSy1-BetaOLSy0)/N)	#
+			}#
+		I<-(X%*%BetaOLSy1-X%*%BetaOLSy0+z*((y-X%*%BetaOLSy1)/phat)- (1-z)*((y-X%*%BetaOLSy0)/(1-phat)))-output$DR$naiv#
+		output$DR$se<-sqrt(sum(I^2))/N#
+		}#
+	zalpha<-qnorm(1-alpha/2)#
+	#Confidence intervals#
+	dnames<-dimnames(output$OR$conf.bias.grid)#
+	dnames[[3]]<-c('lower','upper')
+output$OR$ci<-array(dim=c(dim=c(dim(output$OR$conf.bias.grid),2)),dimnames=dnames)#
+	output$OR$ci[,,1]<-rep(output$OR$naiv-zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	output$OR$ci[,,2]<-rep(output$OR$naiv+zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	output$DR$ci<-output$OR$ci#
+	output$DR$ci[,,1]<-rep(output$DR$naiv-zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$DR$ci[,,2]<-rep(output$DR$naiv+zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$ui<-output$OR$IdentInt+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$ui<-output$DR$IdentInt+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$OR$naivci<-output$OR$naiv+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$naivci<-output$DR$naiv+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$gridn<-gridn
+output$call <- match.call()#
+	class(output)<-"uicausal"
+output
+class(output)<-"uicausal"
+output
+###Warnings#
+ if(class(data)!="data.frame"){#
+	stop('Data must be a data frame')#
+  }#
+  y.data<-get_all_vars(out.formula,data=data)#
+  z.data<-get_all_vars(treat.formula,data=data)#
+#  remove individuals with partial missing data in the covariates#
+  if(sum(complete.cases(y.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates! ',sum(complete.cases(y.data)==FALSE),'individual(s) are removed from the outcome regression.'))#
+	y.data<-y.data[complete.cases(y.data),]#
+  }#
+  if(sum(complete.cases(z.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates. ',sum(complete.cases(z.data)==FALSE),'individual(s) are removed from the propensity score regression.'))#
+	z.data<-z.data[complete.cases(z.data),]#
+  }#
+	if(plot==TRUE){#
+    if((length(rho0)>1|length(rho1)>1)&sum(rho0!=rho1)>0){#
+    	warning('In order to plot results rho0 and rho1 must be the same interval, plot changed to FALSE.')#
+    	plot=FALSE#
+    	}#
+	if(min(rho.plotrange)>=min(rho)){#
+	#	warning('Lower bound of plotrange is >= lower bound of UI, it needs to be less than. You will not be able to plot this object.')#
+		rho.plotrange[1]=(min(rho)-1)/2}#
+	if(max(rho.plotrange)<=max(rho)){#
+		#warning('Upper bound of plotrange is <= upper bound of UI, it needs to be greater than. You will not be able to plot this object.')#
+		rho.plotrange[2]=(max(rho)+1)/2}#
+	}#
+  out.model0<-lm(out.formula,data=y.data[z==0,])  #
+  out.model1<-lm(out.formula,data=y.data[z==1,])  #
+  treat.model<-glm(treat.formula,family=binomial(link="probit"),data=z.data)#
+  z<-z.data[,1]#
+  y<-y.data[,1]#
+  y0<-y[z==0]#
+  y1<-y[z==1]#
+  X1<-model.matrix(out.model1)#
+  X0<-model.matrix(out.model0)#
+  Xz<-model.matrix(treat.model)#
+#
+  d0<-dim(X0)#
+  d1<-dim(X1)#
+  n0<-d0[1]#
+  n1<-d1[1]#
+  N<-n0+n1#
+  p<-d0[2]-1#
+  pz<-dim(Xz)[2]-1#
+  #estimating delta, u and alpha0#
+  gamma<-coef(summary(treat.model))[,1]#
+  #Estimating BetaOLS untreated#
+  BetaOLSy0<-coef(summary(out.model0))[,1]#
+  varBetaOLSy0<-diag((coef(summary(out.model0))[,2])^2)#
+  sigma0hatOLS<-summary(out.model0)$sigma#
+#
+  u<-(Xz%*%gamma)#
+  u0<-(Xz[z==0,]%*%gamma)#
+  u1<-(Xz[z==1,]%*%gamma)#
+  OLSlambda0<-solve(t(X0)%*%X0)%*%t(X0)%*%lambda0(u0)#
+  l0z0<-mean(lambda0(u0))#
+  l0<-mean(lambda0(u))#
+  OLSlambda1<-solve(t(X1)%*%X1)%*%t(X1)%*%lambda1(u1)#
+  l1z1<-mean(lambda1(u1))#
+  l1<-mean(lambda1(u))#
+  output<-list()#
+  t0<-gridrho.f(rho0,gridn,rho.plotrange,plot)#
+  gridrho0<-t0[[1]]#
+  nui0<-t0[[2]]#
+  t1<-gridrho.f(rho1,gridn,rho.plotrange,plot)#
+  gridrho1<-t1[[1]]#
+  nui1<-t1[[2]]#
+  output$sigma0hat<-sigmaOLScor0(X0,sigma0hatOLS,n0,p,u0,gridrho0)#
+  output$rho0<-rho0#
+  if(ACT==FALSE){#
+  output$rho1<-rho1#
+  #Estimating BetaOLS treated#
+  BetaOLSy1<-coef(summary(out.model1))[,1]#
+  varBetaOLSy1<-diag((coef(summary(out.model1))[,2])^2)#
+  sigma1hatOLS<-summary(out.model1)$sigma#
+  output$sigma1hat<-sigmaOLScor1(X1,sigma1hatOLS,n1,p,u1,gridrho1)#
+  }#
+  output$DR$conf.bias<-vector(length=2)#
+  names(output$DR$conf.bias)<-c('Min', 'Max')#
+  output$DR$IdentInt<-output$DR$conf.bias#
+  output$DR$ui<-output$DR$conf.bias#
+  output$DR$naivci<-output$DR$conf.bias#
+  output$OR<-output$DR#
+  ##################### NAIV ESTIMATES ######################
+  phat<-pnorm(Xz%*%gamma)#
+  phat0<-phat[z==0]#
+  if(ACT==TRUE){#
+  	output$OR$naiv<-mean(y1-X1%*%BetaOLSy0)#
+  	output$DR$naiv<-output$OR$naiv-sum((y0-X0%*%BetaOLSy0)/(1-phat0))/n1#
+  }else{#
+  	output$OR$naiv<-mean(X%*%BetaOLSy1-X%*%BetaOLSy0)#
+	phat1<-phat[z==1]#
+	output$DR$naiv<-output$OR$naiv+(sum((y1-X1%*%BetaOLSy1)/phat1)-sum((y0-X0%*%BetaOLSy0)/(1-phat0)))/N#
+  }#
+	##################### CONFOUNDING BIAS ######################
+	exgz1<-rep(1,n1)%*%X1/n1#
+	exgz0<-rep(1,n0)%*%X0/n0#
+	if(ACT==TRUE){#
+	#Counfounding bias regression imputation ACT#
+	f<-gridrho0*output$sigma0hat*c(l1z1+exgz1%*%OLSlambda0)#
+	output$OR$conf.bias.grid<-f#
+	output$OR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	#Total bias DR ACT#
+	f<-gridrho0*output$sigma0hat*l0*N/n1#
+	output$DR$conf.bias.grid<-f#
+	output$DR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	}else{#
+	#Counfounding bias regression imputation ACE#
+	f1<-gridrho1*output$sigma1hat*c(rep(1,N)%*%X%*%OLSlambda1)/N#
+	f2<-gridrho0*output$sigma0hat*c(rep(1,N)%*%X%*%OLSlambda0)/N#
+	output$OR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	rownames(output$OR$conf.bias.grid)<-as.character(gridrho1)#
+	colnames(output$OR$conf.bias.grid)<-as.character(gridrho0)#
+	output$OR$conf.bias<-c(min(output$OR$conf.bias.grid[nui1,nui0]),max(output$OR$conf.bias.grid[nui1,nui0]))#
+	#Total bias DR ACE#
+	f1<-gridrho1*output$sigma1hat*l1#
+	f2<-gridrho0*output$sigma0hat*l0#
+	#Want the same rownames and colnames as output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	output$DR$conf.bias<-c(min(output$DR$conf.bias.grid[nui1,nui0]),max(output$DR$conf.bias.grid[nui1,nui0]))#
+	}#
+	#Identification interval, NAIV ESTIMATES - BIAS (interval)#
+	output$OR$IdentInt<-rep(output$OR$naiv,2)-output$OR$conf.bias[2:1]#
+	output$DR$IdentInt<-rep(output$DR$naiv,2)-output$DR$conf.bias[2:1]#
+	#Coef, NAIV ESTIMATES - BIAS (for each value of rho)#
+	#Want the same rownames and colnames as conf.bias.grid#
+	output$DR$coef<-output$DR$conf.bias.grid#
+	output$DR$coef<-array(data=output$DR$naiv,dim=dim(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$coef<-output$OR$conf.bias.grid#
+	output$OR$coef<-array(data=output$OR$naiv,dim=dim(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	#Standard errors#
+	if(ACT==TRUE){#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACT(X,y,z,BetaOLSy0,output$OR$naiv,n1,N,p))#
+		}else{#
+		output$OR$se<-sqrt((2*sigma1hatOLS^2+  (BetaOLSy1-BetaOLSy0)%*%cov(X1)%*%(BetaOLSy1-BetaOLSy0))/n1)#
+		}#
+		output$DR$se<-sqrt(sandACT(gamma,X,Xz,y,z,u,BetaOLSy0,phat,output$DR$naiv,n1,n0,N,p,pz))#
+	}else{#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACE(X,y,z,BetaOLSy0,BetaOLSy1,output$OR$naiv,N,p))#
+			}else{#
+		output$OR$se<-sqrt(rep(1,N)%*%X%*%(sigma1hatOLS^2*solve(t(X1)%*%X1)+sigma0hatOLS^2*solve(t(X0)%*%X0))%*%t(X)%*%rep(1,N)/N^2 + (BetaOLSy1-BetaOLSy0)%*%cov(X)%*%(BetaOLSy1-BetaOLSy0)/N)	#
+			}#
+		I<-(X%*%BetaOLSy1-X%*%BetaOLSy0+z*((y-X%*%BetaOLSy1)/phat)- (1-z)*((y-X%*%BetaOLSy0)/(1-phat)))-output$DR$naiv#
+		output$DR$se<-sqrt(sum(I^2))/N#
+		}#
+	zalpha<-qnorm(1-alpha/2)#
+	#Confidence intervals#
+	dnames<-dimnames(output$OR$conf.bias.grid)#
+	dnames[[3]]<-c('lower','upper')#
+	output$OR$ci<-array(dim=c(dim=c(dim(output$OR$conf.bias.grid),2)),dimnames=dnames)#
+	output$OR$ci[,,1]<-rep(output$OR$naiv-zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	output$OR$ci[,,2]<-rep(output$OR$naiv+zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	output$DR$ci<-output$OR$ci#
+	output$DR$ci[,,1]<-rep(output$DR$naiv-zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$DR$ci[,,2]<-rep(output$DR$naiv+zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$ui<-output$OR$IdentInt+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$ui<-output$DR$IdentInt+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$OR$naivci<-output$OR$naiv+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$naivci<-output$DR$naiv+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$gridn<-gridn
+output
+ls(output)
+ci<-rbind(c(interv.p(x$OR$naivci[1],digitsci),interv.p(x$OR$naivci[2],digitsci)),
+c(interv.p(x$DR$naivci[1],digitsci),interv.p(x$DR$naivci[2],digitsci)))
+ci<-rbind(c(interv.p(x$OR$naivci[1],digitsci),interv.p(x$OR$naivci[2],digitsci)),#
+		c(interv.p(x$DR$naivci[1],digitsci),interv.p(x$DR$naivci[2],digitsci)))
+c(interv.p(x$DR$naivci,digitsci)))
+x<-ui
+c(interv.p(x$DR$naivci,digitsci)))
+digitsci<-2
+ci<-rbind(c(interv.p(x$OR$naivci,digitsci)),#
+		c(interv.p(x$DR$naivci,digitsci)))
+ci
+ui<-rbind(c(interv.p(x$OR$ui,digitsui)), c(interv.p(x$DR$ui,digitsui)))
+ci<-c(interv.p(x$OR$naivci,digitsci),interv.p(x$DR$naivci,digitsci))
+ci
+ui<-c(interv.p(x$OR$ui,digitsui), interv.p(x$DR$ui,digitsui))
+digitsui=3
+ui<-c(interv.p(x$OR$ui,digitsui), interv.p(x$DR$ui,digitsui))
+T<-data.frame(Est=round(x$naiv,digits),ci=ci,ui=ui)
+digits=3
+digitsci=3
+ci<-c(interv.p(x$OR$naivci,digitsci),interv.p(x$DR$naivci,digitsci))#
+ui<-c(interv.p(x$OR$ui,digitsui), interv.p(x$DR$ui,digitsui))#
+T<-data.frame(Est=round(x$naiv,digits),ci=ci,ui=ui)
+T<-data.frame(Est=round(c(x$OR$naiv,x$DR$naiv),digits),ci=ci,ui=ui)
+T
+cat("\nCall:\n", deparse(x$call), "\n\n\n", sep = "")
+cat("Confidence intervals (CI) derived assuming unconfoundedness (rho=0)","\n",sep="")
+if(sum(is.na(x$rho))==0){cat("Uncertainty intervals (UI) derived assuming ",min(x$rho),"<=rho<=", max(x$rho),"\n","\n",sep="")}else{
+cat("Uncertainty intervals (UI) derived assuming rho0=",x$rho0," and rho1=", x$rho1,"\n","\n",sep="")
+}
+x$rho
+ls(x)
+rho0
+rho1
+rho
+#' Print function for object of class uicausal#
+#'#
+#' @param x An object of returned from \code{\link{ui.causal}}#
+#' @param digits number of digits to be printed.#
+#' @param digitsci number of digits to be printed in the confidence interval.#
+#' @param digitsui number of digits to be printed in the uncertainty interval.#
+#'#
+#' @export#
+print.uicausal<-function(x,digits=3,digitsci=digits,digitsui=digits){#
+ci<-c(interv.p(x$OR$naivci,digitsci),interv.p(x$DR$naivci,digitsci))#
+ui<-c(interv.p(x$OR$ui,digitsui), interv.p(x$DR$ui,digitsui))#
+T<-data.frame(Est=round(c(x$OR$naiv,x$DR$naiv),digits),ci=ci,ui=ui)#
+cat("\nCall:\n", deparse(x$call), "\n\n\n", sep = "")#
+cat("Confidence intervals (CI) derived assuming unconfoundedness (rho=0)","\n",sep="")#
+if(length(x$rho0)>1&length(x$rho1)>1){#
+	cat("Uncertainty intervals (UI) derived assuming ",min(x$rho0),"<=rho0<=", max(x$rho0)," and ",min(x$rho1),"<=rho1<=", 	#
+			max(x$rho1) ,"\n","\n",sep="")#
+}else{#
+	if(length(x$rho0)>1){#
+		cat("Uncertainty intervals (UI) derived assuming ",min(x$rho0),"<=rho0<=", max(x$rho0)," and rho1=", x$rho1 ,"\n","\n",sep="")		#
+	}else{#
+		if(length(x$rho1)>1){#
+			"Uncertainty intervals (UI) derived assuming rho0=",x$rho0," and ",min(x$rho1),"<=rho1<=", 	#
+				max(x$rho1) ,"\n","\n",sep="")	#
+		}else{#
+			cat("Uncertainty intervals (UI) derived assuming rho0=",x$rho0," and rho1=", x$rho1,"\n","\n",sep="")			#
+		}}		#
+}#
+print(T)#
+}
+ci<-c(interv.p(x$OR$naivci,digitsci),interv.p(x$DR$naivci,digitsci))#
+ui<-c(interv.p(x$OR$ui,digitsui), interv.p(x$DR$ui,digitsui))
+T<-data.frame(Est=round(c(x$OR$naiv,x$DR$naiv),digits),ci=ci,ui=ui)#
+cat("\nCall:\n", deparse(x$call), "\n\n\n", sep = "")#
+cat("Confidence intervals (CI) derived assuming unconfoundedness (rho=0)","\n",sep="")
+if(length(x$rho0)>1&length(x$rho1)>1){#
+	cat("Uncertainty intervals (UI) derived assuming ",min(x$rho0),"<=rho0<=", max(x$rho0)," and ",min(x$rho1),"<=rho1<=", 	#
+			max(x$rho1) ,"\n","\n",sep="")#
+}else{#
+	if(length(x$rho0)>1){#
+		cat("Uncertainty intervals (UI) derived assuming ",min(x$rho0),"<=rho0<=", max(x$rho0)," and rho1=", x$rho1 ,"\n","\n",sep="")		#
+	}else{#
+		if(length(x$rho1)>1){#
+			"Uncertainty intervals (UI) derived assuming rho0=",x$rho0," and ",min(x$rho1),"<=rho1<=", 	#
+				max(x$rho1) ,"\n","\n",sep="")	#
+		}else{#
+			cat("Uncertainty intervals (UI) derived assuming rho0=",x$rho0," and rho1=", x$rho1,"\n","\n",sep="")			#
+		}}		#
+}
+length(x$rho0)>1&length(x$rho1)>1
+cat("Uncertainty intervals (UI) derived assuming ",min(x$rho0),"<=rho0<=", max(x$rho0)," and ",min(x$rho1),"<=rho1<=", 	#
+			max(x$rho1) ,"\n","\n",sep="")
+if(length(x$rho0)>1){#
+		cat("Uncertainty intervals (UI) derived assuming ",min(x$rho0),"<=rho0<=", max(x$rho0)," and rho1=", x$rho1 ,"\n","\n",sep="")		#
+	}else{#
+		if(length(x$rho1)>1){#
+			"Uncertainty intervals (UI) derived assuming rho0=",x$rho0," and ",min(x$rho1),"<=rho1<=", 	#
+				max(x$rho1) ,"\n","\n",sep="")	#
+		}else{#
+			cat("Uncertainty intervals (UI) derived assuming rho0=",x$rho0," and rho1=", x$rho1,"\n","\n",sep="")			#
+		}}
+cat("Uncertainty intervals (UI) derived assuming ",min(x$rho0),"<=rho0<=", max(x$rho0)," and rho1=", x$rho1 ,"\n","\n",sep="")
+x$rho1
+x$rho0
+max(x$rho0)
+x<-ui
+x$rho0
+ui
+ui<-ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)
+#' Uncertainty intervals for Average Causal Effects#
+#'#
+#' This function allows you to derive uncertainty intervals for the average causal effect (ACE) or the average causal effect on the treated (ACT). The function uses a regression imputation estimator and a doubly robust estimator. The uncertainty intervals can be used as a sensitivity analysis to unconfoundedness. Note that \code{rho}=0 render the same results as assuming no unobserved confounding.#
+#' @param out.formula Formula for the outcome regression models#
+#' @param treat.formula Formula for the propensity score model (regression model for treatment assignment).#
+#' @param data data.frame containing the variables in the formula.#
+#' @param rho Pre-specified interval for \code{rho0} and \code{rho1}.#
+#' @param rho0 Pre-specified value of \code{rho0}, if an interval it has to be the same as \code{rho1}.#
+#' @param rho1 Pre-specified value of \code{rho1}, if an interval it has to be the same as \code{rho0}.#
+#' @param ACT If TRUE Average Causal effect of the Treated is calculated, if FALSE Average Causal effect is calculated. Default is FALSE.#
+#' @param sand Specifies which estimator of the standard errors should be used for OR, see details.#
+#' @param gridn Number of fixed points within the \code{rho} interval for which sigma0hat and sigma1hat should be estimated.#
+#' @param plot If TRUE the function runs slightly slower but you will be able to plot your results using \code{\link{plot.uicausal}}.#
+#' @param rho.plotrange an interval larger than \code{rho} for the plot using \code{\link{plot.uicausal}}.#
+#' @param alpha Default 0.05 corresponding to a confidence level of 95 for CI and UI.#
+#'#
+#'@details In order to visualize the results, you can use \code{\link{plot.uicausal}}. Details about estimators can be found in Genbäck and de Luna (2018)#
+#'#
+#'The standard errors are calculated with the following estimators:#
+#'#
+#'DR ACE - simplified sandwich estimator#
+#'#
+#'DR ACT - sandwich estimator#
+#'#
+#'OR ACE - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance#
+#'#
+#'OR ACT - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance#
+#'#
+#'#
+#' @return A list containing:#
+#' \item{call}{the matched call}#
+#' \item{gridrho}{the values of \code{rho} for which confounding bias is calculated}#
+#' \item{sigma0hat}{consistent estimate of sigma0}#
+#' \item{sigma1hat}{consistent estimate of sigma1}#
+#' \item{conf.bias}{estimated confounding bias assuming \code{rho0} and \code{rho1} is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} (\code{rho}) are pre-specified numbers}#
+#' \item{naiv}{OR and DR estimates assuming unconfoundedness (\code{rho}=0)}#
+#' \item{naivci}{confidence interval assuming unconfoundedness (\code{rho}=0)}#
+#' \item{IdentInt}{estimated identification interval assuming \code{rho0} and \code{rho1} is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} (\code{rho}) are pre-specified numbers}#
+#' \item{ciOR}{confidence intervals for different pre-specified values of \code{rho} for the OR estimator}#
+#' \item{ciDR}{confidence intervals for different pre-specified values of \code{rho} for the DR estimator}#
+#' \item{ui}{uncertainty interval assuming \code{rho0} and \code{rho1} (\code{rho}) is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} are pre-specified numbers}#
+#' \item{output$conf.bias.grid.OR}{estimated confounding bias for the OR estimator assuming \code{rho} in a pre-spciefied interval}#
+#' \item{output$conf.bias.grid.DR}{estimated confounding bias for the DR estimator assuming \code{rho} in a pre-spciefied interval}#
+#' \item{se}{standard errors of the estimators assuming \code{rho}=0. The standard error when \code{rho}!=0 is approximated with se}#
+#' \item{gridn}{number of distinct values of \code{rho} within the interval for which confounding bias is calculated}#
+#' \item{rho}{pre-specified interval for \code{rho0} and \code{rho1}}#
+#' \item{rho1}{if no interval for \code{rho}, the pre-specified value of \code{rho1}}#
+#' \item{rho0}{if no interval for \code{rho}, the pre-specified value of \code{rho0}}#
+#' @importFrom  Matrix rankMatrix#
+#'#
+#' @examples#
+#'library(MASS)#
+#'n<-500#
+#'delta<-c(-0.3,0.65)#
+#'rho<-0.3#
+#'X<-cbind(rep(1,n),rnorm(n))#
+#'x<-X[,-1]#
+#'sigma0<-2#
+#'sigma1<-3#
+#'error<-mvrnorm(n,c(0,0,0),matrix(c(1,rho*sigma0,rho*sigma1,rho*sigma0,sigma0^2,rho*rho*sigma0*sigma1,rho*sigma1,rho*rho*sigma0*sigma1,sigma1^2),ncol=3))#
+#'zstar<-X%*%delta+error[,1]#
+#'z<-as.numeric(zstar>0)#
+#'y1<-ifelse(x< (-1),0.2*x-0.1*x^2,ifelse(x< 1,0.3*x,ifelse(x<3,0.4-0.1*x^2,-0.2-0.1*x)))+error[,3]#
+#'y0<-ifelse(x< (1.5),(0.15-x-0.4*x^2),ifelse(x<1,1.5-x+0.5*x^2+x^3,ifelse(x<2,1.75-0.25*x+0.5*x^2,2.25+0.5*x)))+error[,2]#
+#'mean(y1-y0)#
+#'y<-y0#
+#'y[z==1]<-y1[z==1]#
+#'data<-data.frame(y,z,x)#
+#'#
+#'#
+#'ui<-ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)#
+#'ui#
+#'plot(ui)#
+#'#
+#' @export#
+#
+ui.causal<-function(out.formula,treat.formula,data,rho=c(-0.3,0.3),rho0=rho,rho1=rho0,ACT=FALSE, sand=TRUE,gridn=21, plot=TRUE, #
+rho.plotrange=c(-0.5,0.5), alpha=0.05){#
+ ###Warnings#
+ if(class(data)!="data.frame"){#
+	stop('Data must be a data frame')#
+  }#
+  y.data<-get_all_vars(out.formula,data=data)#
+  z.data<-get_all_vars(treat.formula,data=data)#
+#  remove individuals with partial missing data in the covariates#
+  if(sum(complete.cases(y.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates! ',sum(complete.cases(y.data)==FALSE),'individual(s) are removed from the outcome regression.'))#
+	y.data<-y.data[complete.cases(y.data),]#
+  }#
+  if(sum(complete.cases(z.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates. ',sum(complete.cases(z.data)==FALSE),'individual(s) are removed from the propensity score regression.'))#
+	z.data<-z.data[complete.cases(z.data),]#
+  }#
+	if(plot==TRUE){#
+    if((length(rho0)>1|length(rho1)>1)&sum(rho0!=rho1)>0){#
+    	warning('In order to plot results rho0 and rho1 must be the same interval, plot changed to FALSE.')#
+    	plot=FALSE#
+    	}#
+	if(min(rho.plotrange)>=min(rho)){#
+	#	warning('Lower bound of plotrange is >= lower bound of UI, it needs to be less than. You will not be able to plot this object.')#
+		rho.plotrange[1]=(min(rho)-1)/2}#
+	if(max(rho.plotrange)<=max(rho)){#
+		#warning('Upper bound of plotrange is <= upper bound of UI, it needs to be greater than. You will not be able to plot this object.')#
+		rho.plotrange[2]=(max(rho)+1)/2}#
+	}#
+  out.model0<-lm(out.formula,data=y.data[z==0,])  #
+  out.model1<-lm(out.formula,data=y.data[z==1,])  #
+  treat.model<-glm(treat.formula,family=binomial(link="probit"),data=z.data)#
+  z<-z.data[,1]#
+  y<-y.data[,1]#
+  y0<-y[z==0]#
+  y1<-y[z==1]#
+  X1<-model.matrix(out.model1)#
+  X0<-model.matrix(out.model0)#
+  Xz<-model.matrix(treat.model)#
+#
+  d0<-dim(X0)#
+  d1<-dim(X1)#
+  n0<-d0[1]#
+  n1<-d1[1]#
+  N<-n0+n1#
+  p<-d0[2]-1#
+  pz<-dim(Xz)[2]-1#
+  #estimating delta, u and alpha0#
+  gamma<-coef(summary(treat.model))[,1]#
+  #Estimating BetaOLS untreated#
+  BetaOLSy0<-coef(summary(out.model0))[,1]#
+  varBetaOLSy0<-diag((coef(summary(out.model0))[,2])^2)#
+  sigma0hatOLS<-summary(out.model0)$sigma#
+#
+  u<-(Xz%*%gamma)#
+  u0<-(Xz[z==0,]%*%gamma)#
+  u1<-(Xz[z==1,]%*%gamma)#
+  OLSlambda0<-solve(t(X0)%*%X0)%*%t(X0)%*%lambda0(u0)#
+  l0z0<-mean(lambda0(u0))#
+  l0<-mean(lambda0(u))#
+  OLSlambda1<-solve(t(X1)%*%X1)%*%t(X1)%*%lambda1(u1)#
+  l1z1<-mean(lambda1(u1))#
+  l1<-mean(lambda1(u))#
+  output<-list()#
+  t0<-gridrho.f(rho0,gridn,rho.plotrange,plot)#
+  gridrho0<-t0[[1]]#
+  nui0<-t0[[2]]#
+  t1<-gridrho.f(rho1,gridn,rho.plotrange,plot)#
+  gridrho1<-t1[[1]]#
+  nui1<-t1[[2]]#
+  output$sigma0hat<-sigmaOLScor0(X0,sigma0hatOLS,n0,p,u0,gridrho0)#
+  output$rho0<-rho0#
+  if(ACT==FALSE){#
+  output$rho1<-rho1#
+  #Estimating BetaOLS treated#
+  BetaOLSy1<-coef(summary(out.model1))[,1]#
+  varBetaOLSy1<-diag((coef(summary(out.model1))[,2])^2)#
+  sigma1hatOLS<-summary(out.model1)$sigma#
+  output$sigma1hat<-sigmaOLScor1(X1,sigma1hatOLS,n1,p,u1,gridrho1)#
+  }#
+  output$DR$conf.bias<-vector(length=2)#
+  names(output$DR$conf.bias)<-c('Min', 'Max')#
+  output$DR$IdentInt<-output$DR$conf.bias#
+  output$DR$ui<-output$DR$conf.bias#
+  output$DR$naivci<-output$DR$conf.bias#
+  output$OR<-output$DR#
+  ##################### NAIV ESTIMATES ######################
+  phat<-pnorm(Xz%*%gamma)#
+  phat0<-phat[z==0]#
+  if(ACT==TRUE){#
+  	output$OR$naiv<-mean(y1-X1%*%BetaOLSy0)#
+  	output$DR$naiv<-output$OR$naiv-sum((y0-X0%*%BetaOLSy0)/(1-phat0))/n1#
+  }else{#
+  	output$OR$naiv<-mean(X%*%BetaOLSy1-X%*%BetaOLSy0)#
+	phat1<-phat[z==1]#
+	output$DR$naiv<-output$OR$naiv+(sum((y1-X1%*%BetaOLSy1)/phat1)-sum((y0-X0%*%BetaOLSy0)/(1-phat0)))/N#
+  }#
+	##################### CONFOUNDING BIAS ######################
+	exgz1<-rep(1,n1)%*%X1/n1#
+	exgz0<-rep(1,n0)%*%X0/n0#
+	if(ACT==TRUE){#
+	#Counfounding bias regression imputation ACT#
+	f<-gridrho0*output$sigma0hat*c(l1z1+exgz1%*%OLSlambda0)#
+	output$OR$conf.bias.grid<-f#
+	output$OR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	#Total bias DR ACT#
+	f<-gridrho0*output$sigma0hat*l0*N/n1#
+	output$DR$conf.bias.grid<-f#
+	output$DR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	}else{#
+	#Counfounding bias regression imputation ACE#
+	f1<-gridrho1*output$sigma1hat*c(rep(1,N)%*%X%*%OLSlambda1)/N#
+	f2<-gridrho0*output$sigma0hat*c(rep(1,N)%*%X%*%OLSlambda0)/N#
+	output$OR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	rownames(output$OR$conf.bias.grid)<-as.character(gridrho1)#
+	colnames(output$OR$conf.bias.grid)<-as.character(gridrho0)#
+	output$OR$conf.bias<-c(min(output$OR$conf.bias.grid[nui1,nui0]),max(output$OR$conf.bias.grid[nui1,nui0]))#
+	#Total bias DR ACE#
+	f1<-gridrho1*output$sigma1hat*l1#
+	f2<-gridrho0*output$sigma0hat*l0#
+	#Want the same rownames and colnames as output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	output$DR$conf.bias<-c(min(output$DR$conf.bias.grid[nui1,nui0]),max(output$DR$conf.bias.grid[nui1,nui0]))#
+	}#
+	#Identification interval, NAIV ESTIMATES - BIAS (interval)#
+	output$OR$IdentInt<-rep(output$OR$naiv,2)-output$OR$conf.bias[2:1]#
+	output$DR$IdentInt<-rep(output$DR$naiv,2)-output$DR$conf.bias[2:1]#
+	#Coef, NAIV ESTIMATES - BIAS (for each value of rho)#
+	#Want the same rownames and colnames as conf.bias.grid#
+	output$DR$coef<-output$DR$conf.bias.grid#
+	output$DR$coef<-array(data=output$DR$naiv,dim=dim(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$coef<-output$OR$conf.bias.grid#
+	output$OR$coef<-array(data=output$OR$naiv,dim=dim(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	#Standard errors#
+	if(ACT==TRUE){#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACT(X,y,z,BetaOLSy0,output$OR$naiv,n1,N,p))#
+		}else{#
+		output$OR$se<-sqrt((2*sigma1hatOLS^2+  (BetaOLSy1-BetaOLSy0)%*%cov(X1)%*%(BetaOLSy1-BetaOLSy0))/n1)#
+		}#
+		output$DR$se<-sqrt(sandACT(gamma,X,Xz,y,z,u,BetaOLSy0,phat,output$DR$naiv,n1,n0,N,p,pz))#
+	}else{#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACE(X,y,z,BetaOLSy0,BetaOLSy1,output$OR$naiv,N,p))#
+			}else{#
+		output$OR$se<-sqrt(rep(1,N)%*%X%*%(sigma1hatOLS^2*solve(t(X1)%*%X1)+sigma0hatOLS^2*solve(t(X0)%*%X0))%*%t(X)%*%rep(1,N)/N^2 + (BetaOLSy1-BetaOLSy0)%*%cov(X)%*%(BetaOLSy1-BetaOLSy0)/N)	#
+			}#
+		I<-(X%*%BetaOLSy1-X%*%BetaOLSy0+z*((y-X%*%BetaOLSy1)/phat)- (1-z)*((y-X%*%BetaOLSy0)/(1-phat)))-output$DR$naiv#
+		output$DR$se<-sqrt(sum(I^2))/N#
+		}#
+	zalpha<-qnorm(1-alpha/2)#
+	#Confidence intervals#
+	dnames<-dimnames(output$OR$conf.bias.grid)#
+	dnames[[3]]<-c('lower','upper')#
+	output$OR$ci<-array(dim=c(dim=c(dim(output$OR$conf.bias.grid),2)),dimnames=dnames)#
+	output$OR$ci[,,1]<-rep(output$OR$naiv-zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	output$OR$ci[,,2]<-rep(output$OR$naiv+zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	output$DR$ci<-output$OR$ci#
+	output$DR$ci[,,1]<-rep(output$DR$naiv-zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$DR$ci[,,2]<-rep(output$DR$naiv+zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$ui<-output$OR$IdentInt+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$ui<-output$DR$IdentInt+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$OR$naivci<-output$OR$naiv+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$naivci<-output$DR$naiv+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$gridn<-gridn#
+	output$call <- match.call()#
+	class(output)<-"uicausal"#
+return(output)#
+}
+ui<-ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)
+rho0<-c(0,0.3)
+gridrho.f(rho0,gridn,rho.plotrange,plot)
+library(MASS)
+n<-500
+delta<-c(-0.3,0.65)
+rho<-0.3
+X<-cbind(rep(1,n),rnorm(n))
+x<-X[,-1]
+sigma0<-2
+sigma1<-3
+error<-mvrnorm(n,c(0,0,0),matrix(c(1,rho*sigma0,rho*sigma1,rho*sigma0,sigma0^2,rho*rho*sigma0*sigma1,rho*sigma1,rho*rho*sigma0*sigma1,sigma1^2),ncol=3))
+zstar<-X%*%delta+error[,1]
+z<-as.numeric(zstar>0)
+y1<-ifelse(x< (-1),0.2*x-0.1*x^2,ifelse(x< 1,0.3*x,ifelse(x<3,0.4-0.1*x^2,-0.2-0.1*x)))+error[,3]
+y0<-ifelse(x< (1.5),(0.15-x-0.4*x^2),ifelse(x<1,1.5-x+0.5*x^2+x^3,ifelse(x<2,1.75-0.25*x+0.5*x^2,2.25+0.5*x)))+error[,2]
+mean(y1-y0)
+y<-y0
+y[z==1]<-y1[z==1]
+data<-data.frame(y,z,x)
+ui.causal<-function(out.formula,treat.formula,data,rho=c(-0.3,0.3),rho0=rho,rho1=rho0,ACT=FALSE, sand=TRUE,gridn=21, plot=TRUE, #
+rho.plotrange=c(-0.5,0.5), alpha=0.05){#
+ ###Warnings#
+ if(class(data)!="data.frame"){#
+	stop('Data must be a data frame')#
+  }#
+  y.data<-get_all_vars(out.formula,data=data)#
+  z.data<-get_all_vars(treat.formula,data=data)#
+#  remove individuals with partial missing data in the covariates#
+  if(sum(complete.cases(y.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates! ',sum(complete.cases(y.data)==FALSE),'individual(s) are removed from the outcome regression.'))#
+	y.data<-y.data[complete.cases(y.data),]#
+  }#
+  if(sum(complete.cases(z.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates. ',sum(complete.cases(z.data)==FALSE),'individual(s) are removed from the propensity score regression.'))#
+	z.data<-z.data[complete.cases(z.data),]#
+  }#
+	if(plot==TRUE){#
+    if((length(rho0)>1|length(rho1)>1)&sum(rho0!=rho1)>0){#
+    	warning('In order to plot results rho0 and rho1 must be the same interval, plot changed to FALSE.')#
+    	plot=FALSE#
+    	}#
+	if(min(rho.plotrange)>=min(rho)){#
+	#	warning('Lower bound of plotrange is >= lower bound of UI, it needs to be less than. You will not be able to plot this object.')#
+		rho.plotrange[1]=(min(rho)-1)/2}#
+	if(max(rho.plotrange)<=max(rho)){#
+		#warning('Upper bound of plotrange is <= upper bound of UI, it needs to be greater than. You will not be able to plot this object.')#
+		rho.plotrange[2]=(max(rho)+1)/2}#
+	}#
+  out.model0<-lm(out.formula,data=y.data[z==0,])  #
+  out.model1<-lm(out.formula,data=y.data[z==1,])  #
+  treat.model<-glm(treat.formula,family=binomial(link="probit"),data=z.data)#
+  z<-z.data[,1]#
+  y<-y.data[,1]#
+  y0<-y[z==0]#
+  y1<-y[z==1]#
+  X1<-model.matrix(out.model1)#
+  X0<-model.matrix(out.model0)#
+  Xz<-model.matrix(treat.model)#
+#
+  d0<-dim(X0)#
+  d1<-dim(X1)#
+  n0<-d0[1]#
+  n1<-d1[1]#
+  N<-n0+n1#
+  p<-d0[2]-1#
+  pz<-dim(Xz)[2]-1#
+  #estimating delta, u and alpha0#
+  gamma<-coef(summary(treat.model))[,1]#
+  #Estimating BetaOLS untreated#
+  BetaOLSy0<-coef(summary(out.model0))[,1]#
+  varBetaOLSy0<-diag((coef(summary(out.model0))[,2])^2)#
+  sigma0hatOLS<-summary(out.model0)$sigma#
+#
+  u<-(Xz%*%gamma)#
+  u0<-(Xz[z==0,]%*%gamma)#
+  u1<-(Xz[z==1,]%*%gamma)#
+  OLSlambda0<-solve(t(X0)%*%X0)%*%t(X0)%*%lambda0(u0)#
+  l0z0<-mean(lambda0(u0))#
+  l0<-mean(lambda0(u))#
+  OLSlambda1<-solve(t(X1)%*%X1)%*%t(X1)%*%lambda1(u1)#
+  l1z1<-mean(lambda1(u1))#
+  l1<-mean(lambda1(u))#
+  output<-list()#
+  t0<-gridrho.f(rho0,gridn,rho.plotrange,plot)#
+  gridrho0<-t0[[1]]#
+  nui0<-t0[[2]]#
+  t1<-gridrho.f(rho1,gridn,rho.plotrange,plot)#
+  gridrho1<-t1[[1]]#
+  nui1<-t1[[2]]#
+  output$sigma0hat<-sigmaOLScor0(X0,sigma0hatOLS,n0,p,u0,gridrho0)#
+  output$rho0<-rho0#
+  if(ACT==FALSE){#
+  output$rho1<-rho1#
+  #Estimating BetaOLS treated#
+  BetaOLSy1<-coef(summary(out.model1))[,1]#
+  varBetaOLSy1<-diag((coef(summary(out.model1))[,2])^2)#
+  sigma1hatOLS<-summary(out.model1)$sigma#
+  output$sigma1hat<-sigmaOLScor1(X1,sigma1hatOLS,n1,p,u1,gridrho1)#
+  }#
+  output$DR$conf.bias<-vector(length=2)#
+  names(output$DR$conf.bias)<-c('Min', 'Max')#
+  output$DR$IdentInt<-output$DR$conf.bias#
+  output$DR$ui<-output$DR$conf.bias#
+  output$DR$naivci<-output$DR$conf.bias#
+  output$OR<-output$DR#
+  ##################### NAIV ESTIMATES ######################
+  phat<-pnorm(Xz%*%gamma)#
+  phat0<-phat[z==0]#
+  if(ACT==TRUE){#
+  	output$OR$naiv<-mean(y1-X1%*%BetaOLSy0)#
+  	output$DR$naiv<-output$OR$naiv-sum((y0-X0%*%BetaOLSy0)/(1-phat0))/n1#
+  }else{#
+  	output$OR$naiv<-mean(X%*%BetaOLSy1-X%*%BetaOLSy0)#
+	phat1<-phat[z==1]#
+	output$DR$naiv<-output$OR$naiv+(sum((y1-X1%*%BetaOLSy1)/phat1)-sum((y0-X0%*%BetaOLSy0)/(1-phat0)))/N#
+  }#
+	##################### CONFOUNDING BIAS ######################
+	exgz1<-rep(1,n1)%*%X1/n1#
+	exgz0<-rep(1,n0)%*%X0/n0#
+	if(ACT==TRUE){#
+	#Counfounding bias regression imputation ACT#
+	f<-gridrho0*output$sigma0hat*c(l1z1+exgz1%*%OLSlambda0)#
+	output$OR$conf.bias.grid<-f#
+	output$OR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	#Total bias DR ACT#
+	f<-gridrho0*output$sigma0hat*l0*N/n1#
+	output$DR$conf.bias.grid<-f#
+	output$DR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	}else{#
+	#Counfounding bias regression imputation ACE#
+	f1<-gridrho1*output$sigma1hat*c(rep(1,N)%*%X%*%OLSlambda1)/N#
+	f2<-gridrho0*output$sigma0hat*c(rep(1,N)%*%X%*%OLSlambda0)/N#
+	output$OR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	rownames(output$OR$conf.bias.grid)<-as.character(gridrho1)#
+	colnames(output$OR$conf.bias.grid)<-as.character(gridrho0)#
+	output$OR$conf.bias<-c(min(output$OR$conf.bias.grid[nui1,nui0]),max(output$OR$conf.bias.grid[nui1,nui0]))#
+	#Total bias DR ACE#
+	f1<-gridrho1*output$sigma1hat*l1#
+	f2<-gridrho0*output$sigma0hat*l0#
+	#Want the same rownames and colnames as output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	output$DR$conf.bias<-c(min(output$DR$conf.bias.grid[nui1,nui0]),max(output$DR$conf.bias.grid[nui1,nui0]))#
+	}#
+	#Identification interval, NAIV ESTIMATES - BIAS (interval)#
+	output$OR$IdentInt<-rep(output$OR$naiv,2)-output$OR$conf.bias[2:1]#
+	output$DR$IdentInt<-rep(output$DR$naiv,2)-output$DR$conf.bias[2:1]#
+	#Coef, NAIV ESTIMATES - BIAS (for each value of rho)#
+	#Want the same rownames and colnames as conf.bias.grid#
+	output$DR$coef<-output$DR$conf.bias.grid#
+	output$DR$coef<-array(data=output$DR$naiv,dim=dim(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$coef<-output$OR$conf.bias.grid#
+	output$OR$coef<-array(data=output$OR$naiv,dim=dim(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	#Standard errors#
+	if(ACT==TRUE){#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACT(X,y,z,BetaOLSy0,output$OR$naiv,n1,N,p))#
+		}else{#
+		output$OR$se<-sqrt((2*sigma1hatOLS^2+  (BetaOLSy1-BetaOLSy0)%*%cov(X1)%*%(BetaOLSy1-BetaOLSy0))/n1)#
+		}#
+		output$DR$se<-sqrt(sandACT(gamma,X,Xz,y,z,u,BetaOLSy0,phat,output$DR$naiv,n1,n0,N,p,pz))#
+	}else{#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACE(X,y,z,BetaOLSy0,BetaOLSy1,output$OR$naiv,N,p))#
+			}else{#
+		output$OR$se<-sqrt(rep(1,N)%*%X%*%(sigma1hatOLS^2*solve(t(X1)%*%X1)+sigma0hatOLS^2*solve(t(X0)%*%X0))%*%t(X)%*%rep(1,N)/N^2 + (BetaOLSy1-BetaOLSy0)%*%cov(X)%*%(BetaOLSy1-BetaOLSy0)/N)	#
+			}#
+		I<-(X%*%BetaOLSy1-X%*%BetaOLSy0+z*((y-X%*%BetaOLSy1)/phat)- (1-z)*((y-X%*%BetaOLSy0)/(1-phat)))-output$DR$naiv#
+		output$DR$se<-sqrt(sum(I^2))/N#
+		}#
+	zalpha<-qnorm(1-alpha/2)#
+	#Confidence intervals#
+	dnames<-dimnames(output$OR$conf.bias.grid)#
+	dnames[[3]]<-c('lower','upper')#
+	output$OR$ci<-array(dim=c(dim=c(dim(output$OR$conf.bias.grid),2)),dimnames=dnames)#
+	output$OR$ci[,,1]<-rep(output$OR$naiv-zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	output$OR$ci[,,2]<-rep(output$OR$naiv+zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	output$DR$ci<-output$OR$ci#
+	output$DR$ci[,,1]<-rep(output$DR$naiv-zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$DR$ci[,,2]<-rep(output$DR$naiv+zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$ui<-output$OR$IdentInt+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$ui<-output$DR$IdentInt+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$OR$naivci<-output$OR$naiv+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$naivci<-output$DR$naiv+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$gridn<-gridn#
+	output$call <- match.call()#
+	class(output)<-"uicausal"#
+return(output)#
+}
+library(Matrix)
+source('~/Documents/Forskning/R paket/ui (kopia)/R/gridrho.f.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/grr.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/hess.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/interv.p.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/lambda0.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/lambda1.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/LogL.probit.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/Logl.sandACT.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/ML.probit.R', chdir = TRUE)
+source('~/Documents/Forskning/R paket/ui (kopia)/R/plot.uicausal.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/plot.uiols.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/plot.uiprobit.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/print.uicausal.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/print.uiols.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/print.uiprobit.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/profile.uiols.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/profile.uiprobit.R', chdir = TRUE)
+#' Print function for object of class uicausal#
+#'#
+#' @param x An object of returned from \code{\link{ui.causal}}#
+#' @param digits number of digits to be printed.#
+#' @param digitsci number of digits to be printed in the confidence interval.#
+#' @param digitsui number of digits to be printed in the uncertainty interval.#
+#'#
+#' @export#
+print.uicausal<-function(x,digits=3,digitsci=digits,digitsui=digits){#
+ci<-c(interv.p(x$OR$naivci,digitsci),interv.p(x$DR$naivci,digitsci))#
+ui<-c(interv.p(x$OR$ui,digitsui), interv.p(x$DR$ui,digitsui))#
+T<-data.frame(Est=round(c(x$OR$naiv,x$DR$naiv),digits),ci=ci,ui=ui)#
+cat("\nCall:\n", deparse(x$call), "\n\n\n", sep = "")#
+cat("Confidence intervals (CI) derived assuming unconfoundedness (rho=0)","\n",sep="")#
+if(length(x$rho0)>1&length(x$rho1)>1){#
+	cat("Uncertainty intervals (UI) derived assuming ",min(x$rho0),"<=rho0<=", max(x$rho0)," and ",min(x$rho1),"<=rho1<=", 	#
+			max(x$rho1) ,"\n","\n",sep="")#
+}else{#
+	if(length(x$rho0)>1){#
+		cat("Uncertainty intervals (UI) derived assuming ",min(x$rho0),"<=rho0<=", max(x$rho0)," and rho1=", x$rho1 ,"\n","\n",sep="")		#
+	}else{#
+		if(length(x$rho1)>1){#
+			cat("Uncertainty intervals (UI) derived assuming rho0=",x$rho0," and ",min(x$rho1),"<=rho1<=", 	#
+				max(x$rho1) ,"\n","\n",sep="")	#
+		}else{#
+			cat("Uncertainty intervals (UI) derived assuming rho0=",x$rho0," and rho1=", x$rho1,"\n","\n",sep="")			#
+		}}		#
+}#
+print(T)#
+}#
+x<-ui#
+x$rho0
+ui<-ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)
+source('~/Documents/Forskning/R paket/ui (kopia)/R/sandACT.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/sandImpACE.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/sandImpACT.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/se.ols.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/sigmaOLScor0.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/sigmaOLScor1.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/stx.R', chdir = TRUE)#
+source('~/Documents/Forskning/R paket/ui (kopia)/R/ui.causal.R', chdir = TRUE)
+ui<-ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)
+ui
+plot(ui)
+ui$DR
+ls(ui$DR)
+ls(ui)
+#' Uncertainty intervals for Average Causal Effects#
+#'#
+#' This function allows you to derive uncertainty intervals for the average causal effect (ACE) or the average causal effect on the treated (ACT). The function uses a regression imputation estimator and a doubly robust estimator. The uncertainty intervals can be used as a sensitivity analysis to unconfoundedness. Note that \code{rho}=0 render the same results as assuming no unobserved confounding.#
+#' @param out.formula Formula for the outcome regression models#
+#' @param treat.formula Formula for the propensity score model (regression model for treatment assignment).#
+#' @param data data.frame containing the variables in the formula.#
+#' @param rho Pre-specified interval for \code{rho0} and \code{rho1}.#
+#' @param rho0 Pre-specified value of \code{rho0}, if an interval it has to be the same as \code{rho1}.#
+#' @param rho1 Pre-specified value of \code{rho1}, if an interval it has to be the same as \code{rho0}.#
+#' @param ACT If TRUE Average Causal effect of the Treated is calculated, if FALSE Average Causal effect is calculated. Default is FALSE.#
+#' @param sand Specifies which estimator of the standard errors should be used for OR, see details.#
+#' @param gridn Number of fixed points within the \code{rho} interval for which sigma0hat and sigma1hat should be estimated.#
+#' @param plot If TRUE the function runs slightly slower but you will be able to plot your results using \code{\link{plot.uicausal}}.#
+#' @param rho.plotrange an interval larger than \code{rho} for the plot using \code{\link{plot.uicausal}}.#
+#' @param alpha Default 0.05 corresponding to a confidence level of 95 for CI and UI.#
+#'#
+#'@details In order to visualize the results, you can use \code{\link{plot.uicausal}}. Details about estimators can be found in Genbäck and de Luna (2018)#
+#'#
+#'The standard errors are calculated with the following estimators:#
+#'#
+#'DR ACE - simplified sandwich estimator#
+#'#
+#'DR ACT - sandwich estimator#
+#'#
+#'OR ACE - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance#
+#'#
+#'OR ACT - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance#
+#'#
+#'#
+#' @return A list containing:#
+#' \item{call}{the matched call}#
+#' \item{gridrho}{the values of \code{rho} for which confounding bias is calculated}#
+#' \item{sigma0hat}{consistent estimate of sigma0}#
+#' \item{sigma1hat}{consistent estimate of sigma1}#
+#' \item{conf.bias}{estimated confounding bias assuming \code{rho0} and \code{rho1} is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} (\code{rho}) are pre-specified numbers}#
+#' \item{naiv}{OR and DR estimates assuming unconfoundedness (\code{rho}=0)}#
+#' \item{naivci}{confidence interval assuming unconfoundedness (\code{rho}=0)}#
+#' \item{IdentInt}{estimated identification interval assuming \code{rho0} and \code{rho1} is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} (\code{rho}) are pre-specified numbers}#
+#' \item{ciOR}{confidence intervals for different pre-specified values of \code{rho} for the OR estimator}#
+#' \item{ciDR}{confidence intervals for different pre-specified values of \code{rho} for the DR estimator}#
+#' \item{ui}{uncertainty interval assuming \code{rho0} and \code{rho1} (\code{rho}) is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} are pre-specified numbers}#
+#' \item{output$conf.bias.grid.OR}{estimated confounding bias for the OR estimator assuming \code{rho} in a pre-spciefied interval}#
+#' \item{output$conf.bias.grid.DR}{estimated confounding bias for the DR estimator assuming \code{rho} in a pre-spciefied interval}#
+#' \item{se}{standard errors of the estimators assuming \code{rho}=0. The standard error when \code{rho}!=0 is approximated with se}#
+#' \item{gridn}{number of distinct values of \code{rho} within the interval for which confounding bias is calculated}#
+#' \item{rho}{pre-specified interval for \code{rho0} and \code{rho1}}#
+#' \item{rho1}{if no interval for \code{rho}, the pre-specified value of \code{rho1}}#
+#' \item{rho0}{if no interval for \code{rho}, the pre-specified value of \code{rho0}}#
+#' @importFrom  Matrix rankMatrix#
+#'#
+#' @examples#
+#'library(MASS)#
+#'n<-500#
+#'delta<-c(-0.3,0.65)#
+#'rho<-0.3#
+#'X<-cbind(rep(1,n),rnorm(n))#
+#'x<-X[,-1]#
+#'sigma0<-2#
+#'sigma1<-3#
+#'error<-mvrnorm(n,c(0,0,0),matrix(c(1,rho*sigma0,rho*sigma1,rho*sigma0,sigma0^2,rho*rho*sigma0*sigma1,rho*sigma1,rho*rho*sigma0*sigma1,sigma1^2),ncol=3))#
+#'zstar<-X%*%delta+error[,1]#
+#'z<-as.numeric(zstar>0)#
+#'y1<-ifelse(x< (-1),0.2*x-0.1*x^2,ifelse(x< 1,0.3*x,ifelse(x<3,0.4-0.1*x^2,-0.2-0.1*x)))+error[,3]#
+#'y0<-ifelse(x< (1.5),(0.15-x-0.4*x^2),ifelse(x<1,1.5-x+0.5*x^2+x^3,ifelse(x<2,1.75-0.25*x+0.5*x^2,2.25+0.5*x)))+error[,2]#
+#'mean(y1-y0)#
+#'y<-y0#
+#'y[z==1]<-y1[z==1]#
+#'data<-data.frame(y,z,x)#
+#'#
+#'#
+#'ui<-ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)#
+#'ui#
+#'plot(ui)#
+#'#
+#' @export#
+#
+ui.causal<-function(out.formula,treat.formula,data,rho=c(-0.3,0.3),rho0=rho,rho1=rho0,ACT=FALSE, sand=TRUE,gridn=21, plot=TRUE, #
+rho.plotrange=c(-0.5,0.5), alpha=0.05){#
+ ###Warnings#
+ if(class(data)!="data.frame"){#
+	stop('Data must be a data frame')#
+  }#
+  y.data<-get_all_vars(out.formula,data=data)#
+  z.data<-get_all_vars(treat.formula,data=data)#
+#  remove individuals with partial missing data in the covariates#
+  if(sum(complete.cases(y.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates! ',sum(complete.cases(y.data)==FALSE),'individual(s) are removed from the outcome regression.'))#
+	y.data<-y.data[complete.cases(y.data),]#
+  }#
+  if(sum(complete.cases(z.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates. ',sum(complete.cases(z.data)==FALSE),'individual(s) are removed from the propensity score regression.'))#
+	z.data<-z.data[complete.cases(z.data),]#
+  }#
+	if(plot==TRUE){#
+    if((length(rho0)>1|length(rho1)>1)&sum(rho0!=rho1)>0){#
+    	warning('In order to plot results rho0 and rho1 must be the same interval, plot changed to FALSE.')#
+    	plot=FALSE#
+    	}#
+	if(min(rho.plotrange)>=min(rho)){#
+	#	warning('Lower bound of plotrange is >= lower bound of UI, it needs to be less than. You will not be able to plot this object.')#
+		rho.plotrange[1]=(min(rho)-1)/2}#
+	if(max(rho.plotrange)<=max(rho)){#
+		#warning('Upper bound of plotrange is <= upper bound of UI, it needs to be greater than. You will not be able to plot this object.')#
+		rho.plotrange[2]=(max(rho)+1)/2}#
+	}#
+  out.model0<-lm(out.formula,data=y.data[z==0,])  #
+  out.model1<-lm(out.formula,data=y.data[z==1,])  #
+  treat.model<-glm(treat.formula,family=binomial(link="probit"),data=z.data)#
+  z<-z.data[,1]#
+  y<-y.data[,1]#
+  y0<-y[z==0]#
+  y1<-y[z==1]#
+  X1<-model.matrix(out.model1)#
+  X0<-model.matrix(out.model0)#
+  Xz<-model.matrix(treat.model)#
+#
+  d0<-dim(X0)#
+  d1<-dim(X1)#
+  n0<-d0[1]#
+  n1<-d1[1]#
+  N<-n0+n1#
+  p<-d0[2]-1#
+  pz<-dim(Xz)[2]-1#
+  #estimating delta, u and alpha0#
+  gamma<-coef(summary(treat.model))[,1]#
+  #Estimating BetaOLS untreated#
+  BetaOLSy0<-coef(summary(out.model0))[,1]#
+  varBetaOLSy0<-diag((coef(summary(out.model0))[,2])^2)#
+  sigma0hatOLS<-summary(out.model0)$sigma#
+#
+  u<-(Xz%*%gamma)#
+  u0<-(Xz[z==0,]%*%gamma)#
+  u1<-(Xz[z==1,]%*%gamma)#
+  OLSlambda0<-solve(t(X0)%*%X0)%*%t(X0)%*%lambda0(u0)#
+  l0z0<-mean(lambda0(u0))#
+  l0<-mean(lambda0(u))#
+  OLSlambda1<-solve(t(X1)%*%X1)%*%t(X1)%*%lambda1(u1)#
+  l1z1<-mean(lambda1(u1))#
+  l1<-mean(lambda1(u))#
+  output<-list()#
+  t0<-gridrho.f(rho0,gridn,rho.plotrange,plot)#
+  gridrho0<-t0[[1]]#
+  nui0<-t0[[2]]#
+  output$sigma0hat<-sigmaOLScor0(X0,sigma0hatOLS,n0,p,u0,gridrho0)#
+  output$rho0<-rho0#
+  output$gridrho0<-gridrho0#
+  if(ACT==FALSE){#
+  t1<-gridrho.f(rho1,gridn,rho.plotrange,plot)#
+  gridrho1<-t1[[1]]#
+  nui1<-t1[[2]]#
+  output$rho1<-rho1#
+  output$gridrho1<-gridrho1#
+  #Estimating BetaOLS treated#
+  BetaOLSy1<-coef(summary(out.model1))[,1]#
+  varBetaOLSy1<-diag((coef(summary(out.model1))[,2])^2)#
+  sigma1hatOLS<-summary(out.model1)$sigma#
+  output$sigma1hat<-sigmaOLScor1(X1,sigma1hatOLS,n1,p,u1,gridrho1)#
+  }#
+  output$DR$conf.bias<-vector(length=2)#
+  names(output$DR$conf.bias)<-c('Min', 'Max')#
+  output$DR$IdentInt<-output$DR$conf.bias#
+  output$DR$ui<-output$DR$conf.bias#
+  output$DR$naivci<-output$DR$conf.bias#
+  output$OR<-output$DR#
+  ##################### NAIV ESTIMATES ######################
+  phat<-pnorm(Xz%*%gamma)#
+  phat0<-phat[z==0]#
+  if(ACT==TRUE){#
+  	output$OR$naiv<-mean(y1-X1%*%BetaOLSy0)#
+  	output$DR$naiv<-output$OR$naiv-sum((y0-X0%*%BetaOLSy0)/(1-phat0))/n1#
+  }else{#
+  	output$OR$naiv<-mean(X%*%BetaOLSy1-X%*%BetaOLSy0)#
+	phat1<-phat[z==1]#
+	output$DR$naiv<-output$OR$naiv+(sum((y1-X1%*%BetaOLSy1)/phat1)-sum((y0-X0%*%BetaOLSy0)/(1-phat0)))/N#
+  }#
+	##################### CONFOUNDING BIAS ######################
+	exgz1<-rep(1,n1)%*%X1/n1#
+	exgz0<-rep(1,n0)%*%X0/n0#
+	if(ACT==TRUE){#
+	#Counfounding bias regression imputation ACT#
+	f<-gridrho0*output$sigma0hat*c(l1z1+exgz1%*%OLSlambda0)#
+	output$OR$conf.bias.grid<-f#
+	output$OR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	#Total bias DR ACT#
+	f<-gridrho0*output$sigma0hat*l0*N/n1#
+	output$DR$conf.bias.grid<-f#
+	output$DR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	}else{#
+	#Counfounding bias regression imputation ACE#
+	f1<-gridrho1*output$sigma1hat*c(rep(1,N)%*%X%*%OLSlambda1)/N#
+	f2<-gridrho0*output$sigma0hat*c(rep(1,N)%*%X%*%OLSlambda0)/N#
+	output$OR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	rownames(output$OR$conf.bias.grid)<-as.character(gridrho1)#
+	colnames(output$OR$conf.bias.grid)<-as.character(gridrho0)#
+	output$OR$conf.bias<-c(min(output$OR$conf.bias.grid[nui1,nui0]),max(output$OR$conf.bias.grid[nui1,nui0]))#
+	#Total bias DR ACE#
+	f1<-gridrho1*output$sigma1hat*l1#
+	f2<-gridrho0*output$sigma0hat*l0#
+	#Want the same rownames and colnames as output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	output$DR$conf.bias<-c(min(output$DR$conf.bias.grid[nui1,nui0]),max(output$DR$conf.bias.grid[nui1,nui0]))#
+	}#
+	#Identification interval, NAIV ESTIMATES - BIAS (interval)#
+	output$OR$IdentInt<-rep(output$OR$naiv,2)-output$OR$conf.bias[2:1]#
+	output$DR$IdentInt<-rep(output$DR$naiv,2)-output$DR$conf.bias[2:1]#
+	#Coef, NAIV ESTIMATES - BIAS (for each value of rho)#
+	#Want the same rownames and colnames as conf.bias.grid#
+	output$DR$coef<-output$DR$conf.bias.grid#
+	output$DR$coef<-array(data=output$DR$naiv,dim=dim(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$coef<-output$OR$conf.bias.grid#
+	output$OR$coef<-array(data=output$OR$naiv,dim=dim(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	#Standard errors#
+	if(ACT==TRUE){#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACT(X,y,z,BetaOLSy0,output$OR$naiv,n1,N,p))#
+		}else{#
+		output$OR$se<-sqrt((2*sigma1hatOLS^2+  (BetaOLSy1-BetaOLSy0)%*%cov(X1)%*%(BetaOLSy1-BetaOLSy0))/n1)#
+		}#
+		output$DR$se<-sqrt(sandACT(gamma,X,Xz,y,z,u,BetaOLSy0,phat,output$DR$naiv,n1,n0,N,p,pz))#
+	}else{#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACE(X,y,z,BetaOLSy0,BetaOLSy1,output$OR$naiv,N,p))#
+			}else{#
+		output$OR$se<-sqrt(rep(1,N)%*%X%*%(sigma1hatOLS^2*solve(t(X1)%*%X1)+sigma0hatOLS^2*solve(t(X0)%*%X0))%*%t(X)%*%rep(1,N)/N^2 + (BetaOLSy1-BetaOLSy0)%*%cov(X)%*%(BetaOLSy1-BetaOLSy0)/N)	#
+			}#
+		I<-(X%*%BetaOLSy1-X%*%BetaOLSy0+z*((y-X%*%BetaOLSy1)/phat)- (1-z)*((y-X%*%BetaOLSy0)/(1-phat)))-output$DR$naiv#
+		output$DR$se<-sqrt(sum(I^2))/N#
+		}#
+	zalpha<-qnorm(1-alpha/2)#
+	#Confidence intervals#
+	dnames<-dimnames(output$OR$conf.bias.grid)#
+	dnames[[3]]<-c('lower','upper')#
+	output$OR$ci<-array(dim=c(dim=c(dim(output$OR$conf.bias.grid),2)),dimnames=dnames)#
+	output$OR$ci[,,1]<-rep(output$OR$naiv-zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	output$OR$ci[,,2]<-rep(output$OR$naiv+zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	output$DR$ci<-output$OR$ci#
+	output$DR$ci[,,1]<-rep(output$DR$naiv-zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$DR$ci[,,2]<-rep(output$DR$naiv+zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$ui<-output$OR$IdentInt+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$ui<-output$DR$IdentInt+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$OR$naivci<-output$OR$naiv+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$naivci<-output$DR$naiv+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$gridn<-gridn#
+	output$call <- match.call()#
+	class(output)<-"uicausal"#
+return(output)#
+}
+ui<-ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)
+ls(ui)
+ls(ui$DR)
+ls(ui$OR)
+#' Uncertainty intervals for Average Causal Effects#
+#'#
+#' This function allows you to derive uncertainty intervals for the average causal effect (ACE) or the average causal effect on the treated (ACT). The function uses a regression imputation estimator and a doubly robust estimator. The uncertainty intervals can be used as a sensitivity analysis to unconfoundedness. Note that \code{rho}=0 render the same results as assuming no unobserved confounding.#
+#' @param out.formula Formula for the outcome regression models#
+#' @param treat.formula Formula for the propensity score model (regression model for treatment assignment).#
+#' @param data data.frame containing the variables in the formula.#
+#' @param rho Pre-specified interval for \code{rho0} and \code{rho1}.#
+#' @param rho0 Pre-specified value of \code{rho0}, if an interval it has to be the same as \code{rho1}.#
+#' @param rho1 Pre-specified value of \code{rho1}, if an interval it has to be the same as \code{rho0}.#
+#' @param ACT If TRUE Average Causal effect of the Treated is calculated, if FALSE Average Causal effect is calculated. Default is FALSE.#
+#' @param sand Specifies which estimator of the standard errors should be used for OR, see details.#
+#' @param gridn Number of fixed points within the \code{rho} interval for which sigma0hat and sigma1hat should be estimated.#
+#' @param plot If TRUE the function runs slightly slower but you will be able to plot your results using \code{\link{plot.uicausal}}.#
+#' @param rho.plotrange an interval larger than \code{rho} for the plot using \code{\link{plot.uicausal}}.#
+#' @param alpha Default 0.05 corresponding to a confidence level of 95 for CI and UI.#
+#'#
+#'@details In order to visualize the results, you can use \code{\link{plot.uicausal}}. Details about estimators can be found in Genbäck and de Luna (2018)#
+#'#
+#'The standard errors are calculated with the following estimators:#
+#'#
+#'DR ACE - simplified sandwich estimator#
+#'#
+#'DR ACT - sandwich estimator#
+#'#
+#'OR ACE - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance#
+#'#
+#'OR ACT - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance#
+#'#
+#'#
+#' @return A list containing:#
+#' \item{call}{the matched call}#
+#' \item{gridrho}{the values of \code{rho} for which confounding bias is calculated}#
+#' \item{sigma0hat}{consistent estimate of sigma0}#
+#' \item{sigma1hat}{consistent estimate of sigma1}#
+#' \item{conf.bias}{estimated confounding bias assuming \code{rho0} and \code{rho1} is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} (\code{rho}) are pre-specified numbers}#
+#' \item{naiv}{OR and DR estimates assuming unconfoundedness (\code{rho}=0)}#
+#' \item{naivci}{confidence interval assuming unconfoundedness (\code{rho}=0)}#
+#' \item{IdentInt}{estimated identification interval assuming \code{rho0} and \code{rho1} is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} (\code{rho}) are pre-specified numbers}#
+#' \item{ciOR}{confidence intervals for different pre-specified values of \code{rho} for the OR estimator}#
+#' \item{ciDR}{confidence intervals for different pre-specified values of \code{rho} for the DR estimator}#
+#' \item{ui}{uncertainty interval assuming \code{rho0} and \code{rho1} (\code{rho}) is in a pre-specified interval, or alternatively \code{rho0} and \code{rho1} are pre-specified numbers}#
+#' \item{output$conf.bias.grid.OR}{estimated confounding bias for the OR estimator assuming \code{rho} in a pre-spciefied interval}#
+#' \item{output$conf.bias.grid.DR}{estimated confounding bias for the DR estimator assuming \code{rho} in a pre-spciefied interval}#
+#' \item{se}{standard errors of the estimators assuming \code{rho}=0. The standard error when \code{rho}!=0 is approximated with se}#
+#' \item{gridn}{number of distinct values of \code{rho} within the interval for which confounding bias is calculated}#
+#' \item{rho}{pre-specified interval for \code{rho0} and \code{rho1}}#
+#' \item{rho1}{if no interval for \code{rho}, the pre-specified value of \code{rho1}}#
+#' \item{rho0}{if no interval for \code{rho}, the pre-specified value of \code{rho0}}#
+#' @importFrom  Matrix rankMatrix#
+#'#
+#' @examples#
+#'library(MASS)#
+#'n<-500#
+#'delta<-c(-0.3,0.65)#
+#'rho<-0.3#
+#'X<-cbind(rep(1,n),rnorm(n))#
+#'x<-X[,-1]#
+#'sigma0<-2#
+#'sigma1<-3#
+#'error<-mvrnorm(n,c(0,0,0),matrix(c(1,rho*sigma0,rho*sigma1,rho*sigma0,sigma0^2,rho*rho*sigma0*sigma1,rho*sigma1,rho*rho*sigma0*sigma1,sigma1^2),ncol=3))#
+#'zstar<-X%*%delta+error[,1]#
+#'z<-as.numeric(zstar>0)#
+#'y1<-ifelse(x< (-1),0.2*x-0.1*x^2,ifelse(x< 1,0.3*x,ifelse(x<3,0.4-0.1*x^2,-0.2-0.1*x)))+error[,3]#
+#'y0<-ifelse(x< (1.5),(0.15-x-0.4*x^2),ifelse(x<1,1.5-x+0.5*x^2+x^3,ifelse(x<2,1.75-0.25*x+0.5*x^2,2.25+0.5*x)))+error[,2]#
+#'mean(y1-y0)#
+#'y<-y0#
+#'y[z==1]<-y1[z==1]#
+#'data<-data.frame(y,z,x)#
+#'#
+#'#
+#'ui<-ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)#
+#'ui#
+#'plot(ui)#
+#'#
+#' @export#
+#
+ui.causal<-function(out.formula,treat.formula,data,rho=c(-0.3,0.3),rho0=rho,rho1=rho0,ACT=FALSE, sand=TRUE,gridn=21, plot=TRUE, #
+rho.plotrange=c(-0.5,0.5), alpha=0.05){#
+ ###Warnings#
+ if(class(data)!="data.frame"){#
+	stop('Data must be a data frame')#
+  }#
+  y.data<-get_all_vars(out.formula,data=data)#
+  z.data<-get_all_vars(treat.formula,data=data)#
+#  remove individuals with partial missing data in the covariates#
+  if(sum(complete.cases(y.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates! ',sum(complete.cases(y.data)==FALSE),'individual(s) are removed from the outcome regression.'))#
+	y.data<-y.data[complete.cases(y.data),]#
+  }#
+  if(sum(complete.cases(z.data)==FALSE)>0){#
+	warning(paste('Partial missing values in covariates. ',sum(complete.cases(z.data)==FALSE),'individual(s) are removed from the propensity score regression.'))#
+	z.data<-z.data[complete.cases(z.data),]#
+  }#
+  output<-list()#
+	if(plot==TRUE){#
+    if((length(rho0)>1|length(rho1)>1)&sum(rho0!=rho1)>0){#
+    	warning('In order to plot results rho0 and rho1 must be the same interval, plot changed to FALSE.')#
+    	plot=FALSE#
+    	}#
+	if(min(rho.plotrange)>=min(rho)){#
+	#	warning('Lower bound of plotrange is >= lower bound of UI, it needs to be less than. You will not be able to plot this object.')#
+		rho.plotrange[1]=(min(rho)-1)/2}#
+	if(max(rho.plotrange)<=max(rho)){#
+		#warning('Upper bound of plotrange is <= upper bound of UI, it needs to be greater than. You will not be able to plot this object.')#
+		rho.plotrange[2]=(max(rho)+1)/2}#
+	}#
+  output<-list()#
+  output$plot=plot	#
+#
+  out.model0<-lm(out.formula,data=y.data[z==0,])  #
+  out.model1<-lm(out.formula,data=y.data[z==1,])  #
+  treat.model<-glm(treat.formula,family=binomial(link="probit"),data=z.data)#
+  z<-z.data[,1]#
+  y<-y.data[,1]#
+  y0<-y[z==0]#
+  y1<-y[z==1]#
+  X1<-model.matrix(out.model1)#
+  X0<-model.matrix(out.model0)#
+  Xz<-model.matrix(treat.model)#
+#
+  d0<-dim(X0)#
+  d1<-dim(X1)#
+  n0<-d0[1]#
+  n1<-d1[1]#
+  N<-n0+n1#
+  p<-d0[2]-1#
+  pz<-dim(Xz)[2]-1#
+  #estimating delta, u and alpha0#
+  gamma<-coef(summary(treat.model))[,1]#
+  #Estimating BetaOLS untreated#
+  BetaOLSy0<-coef(summary(out.model0))[,1]#
+  varBetaOLSy0<-diag((coef(summary(out.model0))[,2])^2)#
+  sigma0hatOLS<-summary(out.model0)$sigma#
+#
+  u<-(Xz%*%gamma)#
+  u0<-(Xz[z==0,]%*%gamma)#
+  u1<-(Xz[z==1,]%*%gamma)#
+  OLSlambda0<-solve(t(X0)%*%X0)%*%t(X0)%*%lambda0(u0)#
+  l0z0<-mean(lambda0(u0))#
+  l0<-mean(lambda0(u))#
+  OLSlambda1<-solve(t(X1)%*%X1)%*%t(X1)%*%lambda1(u1)#
+  l1z1<-mean(lambda1(u1))#
+  l1<-mean(lambda1(u))#
+  t0<-gridrho.f(rho0,gridn,rho.plotrange,plot)#
+  gridrho0<-t0[[1]]#
+  nui0<-t0[[2]]#
+  output$sigma0hat<-sigmaOLScor0(X0,sigma0hatOLS,n0,p,u0,gridrho0)#
+  output$rho0<-rho0#
+  output$gridrho0<-gridrho0#
+  if(ACT==FALSE){#
+  t1<-gridrho.f(rho1,gridn,rho.plotrange,plot)#
+  gridrho1<-t1[[1]]#
+  nui1<-t1[[2]]#
+  output$rho1<-rho1#
+  output$gridrho1<-gridrho1#
+  #Estimating BetaOLS treated#
+  BetaOLSy1<-coef(summary(out.model1))[,1]#
+  varBetaOLSy1<-diag((coef(summary(out.model1))[,2])^2)#
+  sigma1hatOLS<-summary(out.model1)$sigma#
+  output$sigma1hat<-sigmaOLScor1(X1,sigma1hatOLS,n1,p,u1,gridrho1)#
+  }#
+  output$DR$conf.bias<-vector(length=2)#
+  names(output$DR$conf.bias)<-c('Min', 'Max')#
+  output$DR$IdentInt<-output$DR$conf.bias#
+  output$DR$ui<-output$DR$conf.bias#
+  output$DR$naivci<-output$DR$conf.bias#
+  output$OR<-output$DR#
+  ##################### NAIV ESTIMATES ######################
+  phat<-pnorm(Xz%*%gamma)#
+  phat0<-phat[z==0]#
+  if(ACT==TRUE){#
+  	output$OR$naiv<-mean(y1-X1%*%BetaOLSy0)#
+  	output$DR$naiv<-output$OR$naiv-sum((y0-X0%*%BetaOLSy0)/(1-phat0))/n1#
+  }else{#
+  	output$OR$naiv<-mean(X%*%BetaOLSy1-X%*%BetaOLSy0)#
+	phat1<-phat[z==1]#
+	output$DR$naiv<-output$OR$naiv+(sum((y1-X1%*%BetaOLSy1)/phat1)-sum((y0-X0%*%BetaOLSy0)/(1-phat0)))/N#
+  }#
+	##################### CONFOUNDING BIAS ######################
+	exgz1<-rep(1,n1)%*%X1/n1#
+	exgz0<-rep(1,n0)%*%X0/n0#
+	if(ACT==TRUE){#
+	#Counfounding bias regression imputation ACT#
+	f<-gridrho0*output$sigma0hat*c(l1z1+exgz1%*%OLSlambda0)#
+	output$OR$conf.bias.grid<-f#
+	output$OR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	#Total bias DR ACT#
+	f<-gridrho0*output$sigma0hat*l0*N/n1#
+	output$DR$conf.bias.grid<-f#
+	output$DR$conf.bias<-c(min(f[nui0]),max(f[nui0]))#
+	}else{#
+	#Counfounding bias regression imputation ACE#
+	f1<-gridrho1*output$sigma1hat*c(rep(1,N)%*%X%*%OLSlambda1)/N#
+	f2<-gridrho0*output$sigma0hat*c(rep(1,N)%*%X%*%OLSlambda0)/N#
+	output$OR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	rownames(output$OR$conf.bias.grid)<-as.character(gridrho1)#
+	colnames(output$OR$conf.bias.grid)<-as.character(gridrho0)#
+	output$OR$conf.bias<-c(min(output$OR$conf.bias.grid[nui1,nui0]),max(output$OR$conf.bias.grid[nui1,nui0]))#
+	#Total bias DR ACE#
+	f1<-gridrho1*output$sigma1hat*l1#
+	f2<-gridrho0*output$sigma0hat*l0#
+	#Want the same rownames and colnames as output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-output$OR$conf.bias.grid#
+	output$DR$conf.bias.grid<-matrix(rep(f1,length(f1)),nrow=length(f1))+t(matrix(rep(f2,length(f2)),nrow=length(f2)))#
+	output$DR$conf.bias<-c(min(output$DR$conf.bias.grid[nui1,nui0]),max(output$DR$conf.bias.grid[nui1,nui0]))#
+	}#
+	#Identification interval, NAIV ESTIMATES - BIAS (interval)#
+	output$OR$IdentInt<-rep(output$OR$naiv,2)-output$OR$conf.bias[2:1]#
+	output$DR$IdentInt<-rep(output$DR$naiv,2)-output$DR$conf.bias[2:1]#
+	#Coef, NAIV ESTIMATES - BIAS (for each value of rho)#
+	#Want the same rownames and colnames as conf.bias.grid#
+	output$DR$coef<-output$DR$conf.bias.grid#
+	output$DR$coef<-array(data=output$DR$naiv,dim=dim(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$coef<-output$OR$conf.bias.grid#
+	output$OR$coef<-array(data=output$OR$naiv,dim=dim(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	#Standard errors#
+	if(ACT==TRUE){#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACT(X,y,z,BetaOLSy0,output$OR$naiv,n1,N,p))#
+		}else{#
+		output$OR$se<-sqrt((2*sigma1hatOLS^2+  (BetaOLSy1-BetaOLSy0)%*%cov(X1)%*%(BetaOLSy1-BetaOLSy0))/n1)#
+		}#
+		output$DR$se<-sqrt(sandACT(gamma,X,Xz,y,z,u,BetaOLSy0,phat,output$DR$naiv,n1,n0,N,p,pz))#
+	}else{#
+		if(sand==TRUE){#
+		output$OR$se<-sqrt(sandImpACE(X,y,z,BetaOLSy0,BetaOLSy1,output$OR$naiv,N,p))#
+			}else{#
+		output$OR$se<-sqrt(rep(1,N)%*%X%*%(sigma1hatOLS^2*solve(t(X1)%*%X1)+sigma0hatOLS^2*solve(t(X0)%*%X0))%*%t(X)%*%rep(1,N)/N^2 + (BetaOLSy1-BetaOLSy0)%*%cov(X)%*%(BetaOLSy1-BetaOLSy0)/N)	#
+			}#
+		I<-(X%*%BetaOLSy1-X%*%BetaOLSy0+z*((y-X%*%BetaOLSy1)/phat)- (1-z)*((y-X%*%BetaOLSy0)/(1-phat)))-output$DR$naiv#
+		output$DR$se<-sqrt(sum(I^2))/N#
+		}#
+	zalpha<-qnorm(1-alpha/2)#
+	#Confidence intervals#
+	dnames<-dimnames(output$OR$conf.bias.grid)#
+	dnames[[3]]<-c('lower','upper')#
+	output$OR$ci<-array(dim=c(dim=c(dim(output$OR$conf.bias.grid),2)),dimnames=dnames)#
+	output$OR$ci[,,1]<-rep(output$OR$naiv-zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	output$OR$ci[,,2]<-rep(output$OR$naiv+zalpha*output$OR$se,length(output$OR$conf.bias.grid))-output$OR$conf.bias.grid#
+	output$DR$ci<-output$OR$ci#
+	output$DR$ci[,,1]<-rep(output$DR$naiv-zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$DR$ci[,,2]<-rep(output$DR$naiv+zalpha*output$DR$se,length(output$DR$conf.bias.grid))-output$DR$conf.bias.grid#
+	output$OR$ui<-output$OR$IdentInt+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$ui<-output$DR$IdentInt+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$OR$naivci<-output$OR$naiv+cbind(-zalpha*output$OR$se,zalpha*output$OR$se)#
+	output$DR$naivci<-output$DR$naiv+cbind(-zalpha*output$DR$se,zalpha*output$DR$se)#
+	output$gridn<-gridn#
+	output$call <- match.call()#
+	class(output)<-"uicausal"#
+return(output)#
+}
+ui<-ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)
+ui
+?attach()
+ls(ui$DR)
+#' Plot of UI and CI#
+#'#
+#' Plot function for objects returned from \code{\link{ui.causal}}.#
+#' Plots confidence intervals for different values of rho and the uncertainty interval.#
+#' @param x An object of class uicausal#
+#' @param DR If TRUE the doubly robust estimator is plotted, otherwise the outcome regression estimator is plotted.#
+#' @param main Main title, default is no title.#
+#' @param ylab Title for y axis, default is no title.#
+#' @param xlab Title for xaxis, default is \code{expression(rho)}.#
+#'#
+#'#
+#' @export#
+plot.uicausal<-function(x,DR=TRUE,main='',xlab=NULL,ylab=''){#
+if(DR==TRUE){#
+	ui.obj<-x$DR#
+	}else{#
+		ui.obj<-x$OR#
+	}#
+#
+if(x$plot==FALSE){#
+	error("Not able to plot uicausal object, with plot==FALSE.")#
+}#
+#
+rho<-x$gridrho0#
+#
+if(is.null(xlab)){xlab<-expression(rho)}#
+#
+plot(rho,ui.obj$coef,type='l',mgp=c(2,1,0),ylim=c(min(ui.obj$ci[,1]),max(ui.obj$ci[,2])),ylab=ylab,xlab=xlab,xaxs='i',main=main)#
+#
+polygon(c(rho, rev(rho)), c(ui.obj$ci[,2],rev(ui.obj$ci[,1])), col = "grey90", border = NA)#
+#
+lines(rho,ui.obj$coef)#
+lines(rho,ui.obj$ci[,1],lty=2)#
+lines(rho,ui.obj$ci[,2],lty=2)#
+lines(c(-1,1),c(0,0))#
+Stn<-x$gridn#
+Fin<-x$gridn*2-1#
+n0<-which(round(x$gridrho,10)==0)#
+#
+if(n0==Stn|n0==Fin){#
+nv<-Stn+round((Fin-Stn)/4)*0:4#
+if(n0==Stn){nv<-nv[-1]}else{nv<-nv[-5]}#
+}else{#
+nv<-sort(Stn+round((Fin-Stn)/3)*0:3)#
+}#
+#
+minR<-which(ui.obj$ci[Stn:Fin,1]==min(ui.obj$ci[Stn:Fin,1]))+(Stn-1)#
+maxR<-which(ui.obj$ci[Stn:Fin,2]==max(ui.obj$ci[Stn:Fin,2]))+(Stn-1)#
+#
+lines(c(rho[4],rho[minR]),c(ui.obj$ci[minR,1],ui.obj$ci[minR,1]),lty=2,col='blue')#
+lines(c(rho[4],rho[maxR]),c(ui.obj$ci[maxR,2],ui.obj$ci[maxR,2]),lty=2,col='blue')#
+arrows(x0=rho[Stn],y0=min(ui.obj$ci[,1])-10,y1=ui.obj$ci[Stn,1],code=3,length=0,lty=2,col='blue')#
+arrows(x0=rho[Fin],y0=min(ui.obj$ci[,1])-10,y1=ui.obj$ci[Fin,1],code=3,length=0,lty=2,col='blue')#
+arrows(x0=0,y0=ui.obj$naivci[ORDR,1],y1=ui.obj$naivci[ORDR,2],code=3,length=0.1,col='red')#
+for(i in nv){#
+arrows(x0=rho[i],y0=ui.obj$ci[i,1],y1=ui.obj$ci[i,2],code=3,length=0.1,lty=3,lwd=1.5)#
+}#
+#
+arrows(x0=rho[4],y0=min(ui.obj$ci[Stn:Fin,1]),y1=max(ui.obj$ci[Stn:Fin,2]),code=3,length=0.1,col='blue')#
+text(mean(rho[2:3]),mean(x$ui[ORDR,]),'UI',col='blue')#
+axis(1,at=c(rho[Stn],rho[Fin]),col.axis='blue')#
+}
+plot(ui)
+x<-ui
+DR=TRUE
+main=''
+xlab=NULL
+ylab=''
+if(DR==TRUE){
+ui.obj<-x$DR
+}else{
+ui.obj<-x$OR
+}
+if(x$plot==FALSE){#
+	error("Not able to plot uicausal object, with plot==FALSE.")#
+}
+rho<-x$gridrho0
+if(is.null(xlab)){xlab<-expression(rho)}
+plot(rho,ui.obj$coef,type='l',mgp=c(2,1,0),ylim=c(min(ui.obj$ci[,1]),max(ui.obj$ci[,2])),ylab=ylab,xlab=xlab,xaxs='i',main=main)
+rho
+ui.obj$coef
+coef<-diag(coef)
+coef<-diag(ui.obj$coef)
+if(is.null(xlab)){xlab<-expression(rho)}
+plot(rho,coef,type='l',mgp=c(2,1,0),ylim=c(min(ui.obj$ci[,1]),max(ui.obj$ci[,2])),ylab=ylab,xlab=xlab,xaxs='i',main=main)
+dim(ui.obj$ci)
+ci<-cbind(diag(ui.obj$ci[,,1]),diag(ui.obj$ci[,,2]))
+ci<-cbind(diag(ui.obj$ci[,,1]),ui.obj$diag(ci[,,2]))
+ui.obj$ci[,,1]
+diag(ui.obj$ci[,,1])
+ci<-cbind(diag(ui.obj$ci[,,1]),diag(ui.obj$ci[,,2]))
+ci
+if(is.null(xlab)){xlab<-expression(rho)}#
+#
+plot(rho,coef,type='l',mgp=c(2,1,0),ylim=c(min(ci[,1]),max(ci[,2])),ylab=ylab,xlab=xlab,xaxs='i',main=main)
+polygon(c(rho, rev(rho)), c(ci[,2],rev(ci[,1])), col = "grey90", border = NA)
+lines(rho,coef)
+lines(rho,ci[,1],lty=2)
+lines(rho,ci[,2],lty=2)
+lines(c(-1,1),c(0,0))
+Stn<-x$gridn
+Fin<-x$gridn*2-1#
+n0<-which(round(x$gridrho,10)==0)#
+#
+if(n0==Stn|n0==Fin){#
+nv<-Stn+round((Fin-Stn)/4)*0:4#
+if(n0==Stn){nv<-nv[-1]}else{nv<-nv[-5]}#
+}else{#
+nv<-sort(Stn+round((Fin-Stn)/3)*0:3)#
+}
+lines(rho,coef)#
+lines(rho,ci[,1],lty=2)#
+lines(rho,ci[,2],lty=2)#
+lines(c(-1,1),c(0,0))#
+Stn<-x$gridn#
+Fin<-x$gridn*2-1#
+n0<-which(round(rho,10)==0)
+if(n0==Stn|n0==Fin){#
+nv<-Stn+round((Fin-Stn)/4)*0:4#
+if(n0==Stn){nv<-nv[-1]}else{nv<-nv[-5]}#
+}else{#
+nv<-sort(Stn+round((Fin-Stn)/3)*0:3)#
+}#
+#
+minR<-which(ci[Stn:Fin,1]==min(ci[Stn:Fin,1]))+(Stn-1)#
+maxR<-which(ci[Stn:Fin,2]==max(ci[Stn:Fin,2]))+(Stn-1)
+n0
+n0<-which(round(rho,10)==0)
+n0
+round(rho,10)
+x$gridrho0
+gridrho.f<-function(rho,gridn,rho.plotrange,plot){#
+#
+  if(length(rho)>1){#
+  	gridrho<-rho[1]+((rho[2]-rho[1])/(gridn-1))*(0:(gridn-1))#
+  	if(plot==TRUE){#
+  		gridrho<-c(rho.plotrange[1]+((rho[1]-rho.plotrange[1])/(gridn-1))*(0:(gridn-2)),gridrho)		#
+		gridrho<-c(gridrho,rho[2]+((rho.plotrange[2]-rho[2])/(gridn-1))*(1:(gridn-1)))#
+		#vector with logical values of which values of rho should be included in the UI#
+		nui<-gridrho>=min(rho)&gridrho<=max(rho)#
+}#
+  }else{#
+	nui<-1#
+	gridrho<-rho#
+	#gridrho<-paste("rho0=",rho0," and ","rho1=",rho1,sep="")#
+  }#
+  if(sum(gridrho==0)>0){#
+  	gridrho<-sort(c(gridrho,0))#
+  }#
+return(list(gridrho,nui))#
+}
+ui<-ui.causal(y~x,z~x,x,data=data,rho=c(0,0.3),ACT=FALSE)
+rho0
+library(ui)
+?ui.probit
+library(MASS)#
+n<-1000#
+#
+delta<-c(0.5,0.6,0.1,-1,1)#
+beta<-c(-0.3,-0.5,0,-0.6,-0.6)#
+#
+X<-cbind(rep(1,n),rnorm(n),runif(n),rbinom(n,2,0.5),rbinom(n,1,0.5))#
+x<-X[,-1]#
+rho=0.4#
+error<-mvrnorm(n,c(0,0),matrix(c(1,rho,rho,1),2))#
+#
+zstar<-X%*%delta+error[,1]#
+z<-as.numeric(zstar>0)#
+#
+ystar<-X%*%beta+error[,2]#
+y<-as.integer(ystar>0)#
+y[z==0]<-NA#
+data=data.frame(y=y,x1=x[,1],x2=x[,2],x3=x[,3],x4=x[,4])#
+m1<-ui.probit(y~x,rho=c(0,0.5))#
+m1#
+plot(m1)#
+m2<-ui.probit(y~x1+x2+x1:x2,data=data,rho=c(0,0.5))#
+m2#
+par(mfrow=c(1,2))#
+plot(m2)#
+profile(m2)
+glm(z~x)
+coef(summary(glm(z~x)))
+library(ui)
+?ui.causal
+library(MASS)#
+n<-500#
+delta<-c(-0.3,0.65)#
+rho<-0.3#
+X<-cbind(rep(1,n),rnorm(n))#
+x<-X[,-1]#
+sigma0<-2#
+sigma1<-3#
+error<-mvrnorm(n,c(0,0,0),matrix(c(1,rho*sigma0,rho*sigma1,rho*sigma0,sigma0^2,rho*rho*sigma0*sigma1,rho*sigma1,rho*rho*sigma0*sigma1,sigma1^2),ncol=3))#
+zstar<-X%*%delta+error[,1]#
+z<-as.numeric(zstar>0)#
+y1<-ifelse(x< (-1),0.2*x-0.1*x^2,ifelse(x< 1,0.3*x,ifelse(x<3,0.4-0.1*x^2,-0.2-0.1*x)))+error[,3]#
+y0<-ifelse(x< (1.5),(0.15-x-0.4*x^2),ifelse(x<1,1.5-x+0.5*x^2+x^3,ifelse(x<2,1.75-0.25*x+0.5*x^2,2.25+0.5*x)))+error[,2]#
+mean(y1-y0)#
+y<-y0#
+y[z==1]<-y1[z==1]#
+data<-data.frame(y,z,x)#
+ui<-ui.causal(y~x,z~x,data=data,rho=c(0,0.3),ACT=FALSE)#
+ui#
+plot(ui)
+library(MASS)#
+n<-500#
+delta<-c(-0.3,0.65)#
+rho<-0.3#
+X<-cbind(rep(1,n),rnorm(n))#
+x<-X[,-1]#
+sigma0<-2#
+sigma1<-3#
+error<-mvrnorm(n,c(0,0,0),matrix(c(1,rho*sigma0,rho*sigma1,rho*sigma0,sigma0^2,rho*rho*sigma0*sigma1,rho*sigma1,rho*rho*sigma0*sigma1,sigma1^2),ncol=3))#
+zstar<-X%*%delta+error[,1]#
+z<-as.numeric(zstar>0)#
+y1<-ifelse(x< (-1),0.2*x-0.1*x^2,ifelse(x< 1,0.3*x,ifelse(x<3,0.4-0.1*x^2,-0.2-0.1*x)))+error[,3]#
+y0<-ifelse(x< (1.5),(0.15-x-0.4*x^2),ifelse(x<1,1.5-x+0.5*x^2+x^3,ifelse(x<2,1.75-0.25*x+0.5*x^2,2.25+0.5*x)))+error[,2]#
+mean(y1-y0)#
+y<-y0#
+y[z==1]<-y1[z==1]#
+data<-data.frame(y,z,x)#
+ui<-ui.causal(y~x,z~x,data=data,rho=c(0,0.3),ACT=TRUE)#
+ui#
+plot(ui)
+ls(ui)
+ui4call
+ui$call
+plot.uicausal<-function(x,DR=TRUE,main='',xlab=NULL,ylab=''){#
+if(DR==TRUE){#
+	ui.obj<-x$DR#
+	}else{#
+		ui.obj<-x$OR#
+	}#
+#
+if(x$plot==FALSE){#
+	stop("Not able to plot uicausal object, with plot==FALSE. In ui.causal() rho0 and rho1 must be equal intervals otherwise plot is changed to FALSE.")#
+}#
+#
+rho<-x$gridrho0#
+if(is.null(x$rho1)){#
+	coef<-ui.obj$coef#
+	ci<-cbind(ui.obj$ci[,,1],ui.obj$ci[,,2])#
+	}else{#
+	coef<-diag(ui.obj$coef)#
+	ci<-cbind(diag(ui.obj$ci[,,1]),diag(ui.obj$ci[,,2]))#
+	}#
+#
+if(is.null(xlab)){xlab<-expression(rho)}#
+#
+plot(rho,coef,type='l',mgp=c(2,1,0),ylim=c(min(ci[,1]),max(ci[,2])),ylab=ylab,xlab=xlab,xaxs='i',main=main)#
+#
+polygon(c(rho, rev(rho)), c(ci[,2],rev(ci[,1])), col = "grey90", border = NA)#
+#
+lines(rho,coef)#
+lines(rho,ci[,1],lty=2)#
+lines(rho,ci[,2],lty=2)#
+lines(c(-1,1),c(0,0))#
+Stn<-x$gridn#
+Fin<-x$gridn*2-1#
+n0<-which(round(rho,10)==0)#
+#
+if(n0==Stn|n0==Fin){#
+nv<-Stn+round((Fin-Stn)/4)*0:4#
+if(n0==Stn){nv<-nv[-1]}else{nv<-nv[-5]}#
+}else{#
+nv<-sort(Stn+round((Fin-Stn)/3)*0:3)#
+}#
+#
+minR<-which(ci[Stn:Fin,1]==min(ci[Stn:Fin,1]))+(Stn-1)#
+maxR<-which(ci[Stn:Fin,2]==max(ci[Stn:Fin,2]))+(Stn-1)#
+#
+lines(c(rho[4],rho[minR]),c(ci[minR,1],ci[minR,1]),lty=2,col='blue')#
+lines(c(rho[4],rho[maxR]),c(ci[maxR,2],ci[maxR,2]),lty=2,col='blue')#
+arrows(x0=rho[Stn],y0=min(ci[,1])-10,y1=ci[Stn,1],code=3,length=0,lty=2,col='blue')#
+arrows(x0=rho[Fin],y0=min(ci[,1])-10,y1=ci[Fin,1],code=3,length=0,lty=2,col='blue')#
+arrows(x0=0,y0=ci[n0,1],y1=ci[n0,2],code=3,length=0.1,col='red')#
+for(i in nv){#
+arrows(x0=rho[i],y0=ci[i,1],y1=ci[i,2],code=3,length=0.1,lty=3,lwd=1.5)#
+}#
+#
+arrows(x0=rho[4],y0=min(ci[Stn:Fin,1]),y1=max(ci[Stn:Fin,2]),code=3,length=0.1,col='blue')#
+text(mean(rho[2:3]),mean(ci),'UI',col='blue')#
+axis(1,at=c(rho[Stn],rho[Fin]),col.axis='blue')#
+}
+ui$call
+PLOT(UI)
+plot(ui)
+dim(ui.obj$ci)
+dim(ui$ci)
+ui$ci
+ui$DR$ci
+#' Plot of UI and CI#
+#'#
+#' Plot function for objects returned from \code{\link{ui.causal}}.#
+#' Plots confidence intervals for different values of rho and the uncertainty interval.#
+#' @param x An object of class uicausal#
+#' @param DR If TRUE the doubly robust estimator is plotted, otherwise the outcome regression estimator is plotted.#
+#' @param main Main title, default is no title.#
+#' @param ylab Title for y axis, default is no title.#
+#' @param xlab Title for xaxis, default is \code{expression(rho)}.#
+#'#
+#'#
+#' @export#
+plot.uicausal<-function(x,DR=TRUE,main='',xlab=NULL,ylab=''){#
+if(DR==TRUE){#
+	ui.obj<-x$DR#
+	}else{#
+		ui.obj<-x$OR#
+	}#
+#
+if(x$plot==FALSE){#
+	stop("Not able to plot uicausal object, with plot==FALSE. In ui.causal() rho0 and rho1 must be equal intervals otherwise plot is changed to FALSE.")#
+}#
+#
+rho<-x$gridrho0#
+if(is.null(x$rho1)){#
+	coef<-ui.obj$coef#
+	ci<-cbind(ui.obj$ci[,1],ui.obj$ci[,2])#
+	}else{#
+	coef<-diag(ui.obj$coef)#
+	ci<-cbind(diag(ui.obj$ci[,,1]),diag(ui.obj$ci[,,2]))#
+	}#
+#
+if(is.null(xlab)){xlab<-expression(rho)}#
+#
+plot(rho,coef,type='l',mgp=c(2,1,0),ylim=c(min(ci[,1]),max(ci[,2])),ylab=ylab,xlab=xlab,xaxs='i',main=main)#
+#
+polygon(c(rho, rev(rho)), c(ci[,2],rev(ci[,1])), col = "grey90", border = NA)#
+#
+lines(rho,coef)#
+lines(rho,ci[,1],lty=2)#
+lines(rho,ci[,2],lty=2)#
+lines(c(-1,1),c(0,0))#
+Stn<-x$gridn#
+Fin<-x$gridn*2-1#
+n0<-which(round(rho,10)==0)#
+#
+if(n0==Stn|n0==Fin){#
+nv<-Stn+round((Fin-Stn)/4)*0:4#
+if(n0==Stn){nv<-nv[-1]}else{nv<-nv[-5]}#
+}else{#
+nv<-sort(Stn+round((Fin-Stn)/3)*0:3)#
+}#
+#
+minR<-which(ci[Stn:Fin,1]==min(ci[Stn:Fin,1]))+(Stn-1)#
+maxR<-which(ci[Stn:Fin,2]==max(ci[Stn:Fin,2]))+(Stn-1)#
+#
+lines(c(rho[4],rho[minR]),c(ci[minR,1],ci[minR,1]),lty=2,col='blue')#
+lines(c(rho[4],rho[maxR]),c(ci[maxR,2],ci[maxR,2]),lty=2,col='blue')#
+arrows(x0=rho[Stn],y0=min(ci[,1])-10,y1=ci[Stn,1],code=3,length=0,lty=2,col='blue')#
+arrows(x0=rho[Fin],y0=min(ci[,1])-10,y1=ci[Fin,1],code=3,length=0,lty=2,col='blue')#
+arrows(x0=0,y0=ci[n0,1],y1=ci[n0,2],code=3,length=0.1,col='red')#
+for(i in nv){#
+arrows(x0=rho[i],y0=ci[i,1],y1=ci[i,2],code=3,length=0.1,lty=3,lwd=1.5)#
+}#
+#
+arrows(x0=rho[4],y0=min(ci[Stn:Fin,1]),y1=max(ci[Stn:Fin,2]),code=3,length=0.1,col='blue')#
+text(mean(rho[2:3]),mean(ci),'UI',col='blue')#
+axis(1,at=c(rho[Stn],rho[Fin]),col.axis='blue')#
+}
+plot(ui)
+library(ui)
+?ui.causal
+library(MASS)#
+n<-500#
+delta<-c(-0.3,0.65)#
+rho<-0.3#
+X<-cbind(rep(1,n),rnorm(n))#
+x<-X[,-1]#
+s0<-2#
+s1<-3#
+error<-mvrnorm(n, c(0,0,0), matrix(c(1,0.6,0.9,0.6,4,0.54,0.9,0.54,9), ncol=3))#
+zstar<-X%*%delta+error[,1]#
+z<-as.numeric(zstar>0)#
+y1<-ifelse(x< (-1),0.2*x-0.1*x^2, ifelse(x< 1,0.3*x, ifelse(x<3,0.4-0.1*x^2,-0.2-0.1*x)))+error[,3]#
+y0<-ifelse(x<1.5, x-0.4*x^2, ifelse(x<2, -0.15-0.25*x+0.5*x^2, 1.85-0.25*x))+error[,2]#
+mean(y1-y0)#
+y<-y0#
+y[z==1]<-y1[z==1]#
+data<-data.frame(y,z,x)#
+ui<-ui.causal(y~x, z~x, data=data, rho=c(0,0.3), ACT=FALSE)#
+ui#
+plot(ui)
+profile(ui)
+library(ui)
