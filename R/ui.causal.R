@@ -1,339 +1,252 @@
-#' Uncertainty intervals for Average Causal Effects
+#' Uncertainty intervals for causal parameters including average causal effect and average causal effect among treated
 #'
-#' This function allows you to derive uncertainty intervals for the average causal effect (ACE) or the average causal effect on the treated (ACT). The function uses a regression imputation estimator and a doubly robust estimator. The uncertainty intervals can be used as a sensitivity analysis to unconfoundedness. Note that \code{rho}=0 render the same results as assuming no unobserved confounding.
-#' @param out.formula Formula for the outcome regression models
+#' This function allows you to derive uncertainty intervals for causal parameters E(Y1), E(Y0), E(Y1|T=0), E(Y0|T=1) in an observational study with Yt being the potential outcome that would have been observed under treatment T=t. The function uses a regression imputation estimator (OR) and a doubly robust estimator (DR). The uncertainty intervals can be used as a sensitivity analysis to unconfoundedness. Note that \code{rho0}=0 and \code{rho1}=0 render the same results as assuming no unobserved confounding.
+#' @param out.formula Formula for the outcome regression model(s).
 #' @param treat.formula Formula for the propensity score model (regression model for treatment assignment).
-#' @param data data.frame containing the variables in the formula.
-#' @param rho Pre-specified interval for \code{rho0} and \code{rho1}.
-#' @param rho0 Pre-specified value of \code{rho0}, if an interval it has to be the same as \code{rho1}.
-#' @param rho1 Pre-specified value of \code{rho1}, if an interval it has to be the same as \code{rho0}.
-#' @param ACT If TRUE Average Causal effect of the Treated is calculated, if FALSE Average Causal effect is calculated. Default is FALSE.
+#' @param data data.frame containing the variables in the formulas.
+#' @param Y Outcome vector. The arguments Y,T and X will be only used if out.formula, treat.formula or data matrix is not specified.
+#' @param T Treatment assignment vector. The arguments Y,T and X will be only used will be used if out.formula, treat.formula or data matrix is not specified.
+#' @param X Covariate matrix. The arguments Y,T and X will be only used if out.formula, treat.formula or data matrix is not specified.
+#' @param rho0 Pre-specified value of \code{rho0}.
+#' @param rho1 Pre-specified value of \code{rho1}.
+#' @param param Specifies parameter of interest, it can be "ACE" (default value), "ACT", "Y0", "Y1", "Y0T1" or "Y1T0".
+#' @param subset Specifies which subset of the covariates should be used in the regression models. It can be "noselection" (default value), "single", "double" or "refit". "Noselection" or "double" is suggested. See details.
 #' @param sand Specifies which estimator of the standard errors should be used for OR, see details.
-#' @param gridn Number of fixed points within the \code{rho} interval for which sigma0 and sigma1 should be estimated.
-#' @param plot If TRUE the function runs slightly slower but you will be able to plot your results using \code{\link{plot.uicausal}}.
-#' @param rho.plotrange an interval larger than \code{rho} for the plot using \code{\link{plot.uicausal}}.
+#' @param gridn Number of fixed points within the \code{rho0} and \code{rho1} intervals for which sigma0 and sigma1 should be estimated.
+#' @param rho.plotrange  An interval larger than \code{rho0} and \code{rho1}. This specifies the range of value (on x axis) where the ui plot will be made using \code{\link{plot.ui}}.
 #' @param alpha Default 0.05 corresponding to a confidence level of 95 for CI and UI.
+#' @param sigma_correction A logical variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias.
+#' @param missing  This argument should not be changed manually. A logical variable which is FALSE by default and TRUE if this function is called withing the function \code{\link{ui.missing}}.
 #'
-#'@details In order to visualize the results, you can use \code{\link{plot.uicausal}}. Details about estimators can be found in Genbäck and de Luna (2018)
+#' @details In order to visualize the results, you can use \code{\link{plot.ui}}. Details about estimators can be found in Genbäck and de Luna (2018)
 #'
-#'The standard errors are calculated with the following estimators:
+#' The standard errors are calculated with the following estimators:
 #'
-#'DR ACE - simplified sandwich estimator
+#' DR - influence function-based estimator
 #'
-#'DR ACT - sandwich estimator
+#' OR - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance
 #'
-#'OR ACE - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance
+#' The set of covariates which are included in the outcome and propensity score models are choosed as below:
 #'
-#'OR ACT - if sand=TRUE sandwich estimator (default and recommended), if sand=FALSE large sample variance
+#' noselection - All the covariates specified in formulas (and included in the data matrix) will be used in the respective models or the set of covariates in the X matrix will be used for all models.
+#'
+#' single - Lasso regressions will be fitted to the outcome models using covariates specified by formulas or X matrix and union of the selected sets will be used.
+#'
+#' double - Lasso regressions will be fitted to the outcome models and the propensity score model using covariates specified by formulas or X matrix and union of the selected sets will be used.
+#'
+#' refit- Lasso regressions will be fitted to the outcome models and the propensity score model using covariates specified by formulas or X matrix and union of the sets found by potential outcome models and the set found by the propensity score model will be used in refitting potential outcome and ps models with no regularizations respectively.
 #'
 #'
 #' @return A list containing:
-#' \item{call}{The matched call}
-#' \item{rho0}{The rage of \code{rho0} from which the ui is calculated}
-#' \item{rho1}{If ACT==FALSE,range of \code{rho1} from which the ui is calculated}
+#' \item{call}{The matched call.}
+#' \item{rho0}{The range of \code{rho0} from which the ui is calculated.}
+#' \item{rho1}{If ACT==FALSE,range of \code{rho1} from which the ui is calculated.}
 #' \item{out.model0}{Outcome regression model for non-treated.}
 #' \item{out.model1}{Outcome regression model for treated.}
 #' \item{treat.model}{Regression model for treatment mechanism (propensity score).}
-#' \item{sigma0}{Consistent estimate of sigma0 for different values of rho0}
-#' \item{sigma1}{Consistent estimate of sigma1 for different values of rho1}
-#' \item{DR}{DR inference, confidence intervals for different pre-specified values of \code{rho} for the OR estimator, uncertainty interval, coefficient estimates, confounding bias, indentification interval, standard error etc.}
-#' \item{OR}{OR inference, confidence intervals for different pre-specified values of \code{rho} for the OR estimator, uncertainty interval, coefficient estimates, confounding bias, indentification interval, standard error etc.}
+#' \item{sigma0}{Estimate of sigma0 for different values of rho0.}
+#' \item{sigma1}{Estimate of sigma1 for different values of rho1.}
+#' \item{DR}{DR inference, confidence intervals for different pre-specified values of \code{rho0} and \code{rho1} for the OR estimator, uncertainty interval, coefficient estimates, confounding bias, identification interval, standard error etc.}
+#' \item{OR}{OR inference, confidence intervals for different pre-specified values of \code{rho0} and \code{rho1} for the OR estimator, uncertainty interval, coefficient estimates, confounding bias, identification interval, standard error etc.}
+#' \item{XYhat}{Union of the sets of covariates selected by fitting lasso regressions to the outcome models using using covariates specified by formulas or X matrix.}
+#' \item{XThat}{Set of covariates selected by fitting lasso regression to the ps model using covariates specified by formulas or X matrix.}
 #'
-#' @importFrom  Matrix rankMatrix
-#'@author Minna Genbäck
-#'@references Genbäck, M., de Luna, X. (2018). Causal Inference Accounting for Unobserved Confounding after Outcome Regression and Doubly Robust Estimation. \emph{Biometrics}. DOI: 10.1111/biom.13001
+#' @references Genbäck, M., de Luna, X. (2018). Causal Inference Accounting for Unobserved Confounding after Outcome Regression and Doubly Robust Estimation. \emph{Biometrics}. DOI: 10.1111/biom.13001
 #' @examples
-#'library(MASS)
-#'n<-500
-#'delta<-c(-0.3,0.65)
-#'rho<-0.3
-#'X<-cbind(rep(1,n),rnorm(n))
-#'x<-X[,-1]
-#'s0<-2
-#'s1<-3
-#'error<-mvrnorm(n, c(0,0,0), matrix(c(1,0.6,0.9,0.6,4,0.54,0.9,0.54,9), ncol=3))
-#'zstar<-X%*%delta+error[,1]
-#'z<- zstar>0
-#'y1<-ifelse(x< (-1),0.2*x-0.1*x^2, ifelse(x< 1,0.3*x, ifelse(x<3,0.4-0.1*x^2,-0.2-0.1*x)))+error[,3]
-#'y0<-ifelse(x<1.5, x-0.4*x^2, ifelse(x<2, -0.15-0.25*x+0.5*x^2, 1.85-0.25*x))+error[,2]
-#'y<-y0
-#'y[z==1]<-y1[z==1]
-#'data<-data.frame(y,z,x)
+#' library(MASS)
+#' n <- 500
+#' rho <- 0.3
+#' x <- rnorm(n)
+#' s0 <- 2
+#' s1 <- 3
+#' error <- mvrnorm(
+#'   n, c(0, 0, 0),
+#'   matrix(c(1, 0.6, 0.9, 0.6, 4, 0.54, 0.9, 0.54, 9), ncol = 3)
+#' )
+#' delta <- c(-0.3, 0.65)
+#' tstar <- cbind(1, x) %*% delta + error[, 1]
+#' t <- tstar > 0
+#' y1 <- -2 + x - 3 * x^2 + error[, 3]
+#' y0 <- 0.5 + 2 * x - x^2 + error[, 2]
+#' y <- y0
+#' y[t == 1] <- y1[t == 1]
+#' data <- data.frame(y, t, x)
+#'
+#' mean(y1 - y0)
+#' ui <- ui.causal(y ~ x + I(x^2), t ~ x + I(x^2),
+#'   data = data, rho0 = c(0, 0.4), rho1 = c(0, 0.4),
+#'   subset = "double", param = "ACE", sigma_correction = TRUE
+#' )
+#' ui <- ui.causal(
+#'   Y = y, T = t, X = cbind(x, x^2),
+#'   rho0 = c(0, 0.4), rho1 = c(0, 0.4),
+#'   subset = "double", param = "ACE", sigma_correction = TRUE
+#' )
+#' ui
+#' plot(ui)
+#' ui$XYhat
+#' ui$XThat
 #'
 #'
-#'ui<-ui.causal(y~x, z~x, data=data, rho=c(0,0.3), ACT=FALSE)
-#'ui
-#'plot(ui)
-#'profile(ui)
-#'mean(y1-y0)
-#'
-#'ui<-ui.causal(y~x, z~x, data=data, rho=c(0,0.3), ACT=TRUE)
-#'ui
-#'plot(ui)
-#'mean(y1[z==1]-y0[z==1])
-#'
-#' @importFrom stats binomial coef complete.cases cov get_all_vars glm lm model.matrix pnorm qnorm
+#' mean(y1[t == 1] - y0[t == 1])
+#' ui <- ui.causal(
+#'   Y = y, T = t, X = cbind(x, x^2),
+#'   rho0 = c(0, 0.4), rho1 = c(0, 0.4),
+#'   subset = "noselection", param = "ACT", sigma_correction = TRUE
+#' )
+#' ui
+#' plot(ui)
 #' @export
 
-ui.causal<-function(out.formula,treat.formula,data,rho=c(-0.3,0.3),rho0=NULL,rho1=NULL,ACT=FALSE, sand=TRUE,gridn=21, plot=TRUE, 
-rho.plotrange=c(-0.5,0.5), alpha=0.05){
- 
- 
- if(is.null(rho0)&is.null(rho1)){
- 	rho0<-rho
- 	rho1<-rho
- }else{
- 	if(is.null(rho0)) rho0<-rho1
- 	if(is.null(rho1)) rho1<-rho0
- }
- rho0<-sort(rho0)
- rho1<-sort(rho1)
- 
- ###Warnings
- if(class(data)!="data.frame"){
-	stop('Data must be a data frame')
-  }
-  
-  y.data<-get_all_vars(out.formula,data=data)
-  z.data<-get_all_vars(treat.formula,data=data)
-  
-#  remove individuals with partial missing data in the covariates
-  if(sum(complete.cases(y.data)==FALSE)>0){
-	warning(paste('Partial missing values in covariates! ',sum(complete.cases(y.data)==FALSE),'individual(s) are removed from the outcome regression.'))
-	y.data<-y.data[complete.cases(y.data),]
-  }
-  if(sum(complete.cases(z.data)==FALSE)>0){
-	warning(paste('Partial missing values in covariates. ',sum(complete.cases(z.data)==FALSE),'individual(s) are removed from the propensity score regression.'))
-	z.data<-z.data[complete.cases(z.data),]
-  }
-    
-  output<-list()
-	if(plot==TRUE){
-    if((length(rho0)==1&length(rho1)==1)|sum(rho0!=rho1)>0){
-    	#warning('In order to plot results rho0 and rho1 must be equal intervals, plot changed to FALSE.')
-    	plot=FALSE
-    	}
-	if(min(rho.plotrange)>=min(rho)){
-	#	warning('Lower bound of plotrange is >= lower bound of UI, it needs to be less than. You will not be able to plot this object.')
-		rho.plotrange[1]=(min(rho)-1)/2}
-	if(max(rho.plotrange)<=max(rho)){
-		#warning('Upper bound of plotrange is <= upper bound of UI, it needs to be greater than. You will not be able to plot this object.')
-		rho.plotrange[2]=(max(rho)+1)/2}
-	}
-	
-	output$plot<-list()
-    output$plot$plot=plot	
-  
-  z<-z.data[,1]
-  y<-y.data[,1]
-  y0<-y[z==0]
-  y1<-y[z==1]
-      
-  X<-model.matrix(lm(out.formula,data=y.data))
-  out.model0<-lm(out.formula,data=y.data[z==0,])  
-  out.model1<-lm(out.formula,data=y.data[z==1,])  
-  treat.model<-glm(treat.formula,family=binomial(link="probit"),data=z.data)
-  
-  output$out.model0<-out.model0
-  output$out.model1<-out.model1
-  output$treat.model<-treat.model
-  
-  X1<-model.matrix(out.model1)
-  X0<-model.matrix(out.model0)
-  Xz<-model.matrix(treat.model)
+ui.causal <- function(out.formula = NULL, treat.formula = NULL,
+                      data = NULL, Y = NULL, T = NULL, X = NULL,
+                      rho0 = c(-0.1, 0.1), rho1 = c(-0.1, 0.1),
+                      param = "ACE", subset = "noselection",
+                      sand = TRUE, gridn = 21,
+                      rho.plotrange = c(-0.5, 0.5), alpha = 0.05,
+                      regularization_alpha = 1,
+                      sigma_correction = TRUE, missing = FALSE) {
+  # comment this for now, one should be carefull when to use rho0 and when rho1, also it might be that we dont need ui in the plot (infer=F)
+  # if (min(rho.plotrange) >= min(rho0)) {
+  #   	warning('Lower bound of plotrange is >= lower bound of UI, it needs to be less than. You will not be able to plot this object.')
+  #   rho.plotrange[1] <- (min(rho0) - 1) / 2
+  # }
+  # if (max(rho.plotrange) <= max(rho0)) {
+  #   warning('Upper bound of plotrange is <= upper bound of UI, it needs to be greater than. You will not be able to plot this object.')
+  #   rho.plotrange[2] <- (max(rho0) + 1) / 2
+  # }
 
-  d0<-dim(X0)
-  d1<-dim(X1)
-  n0<-d0[1]
-  n1<-d1[1]
-  N<-n0+n1
-  p<-d0[2]-1
-  pz<-dim(Xz)[2]-1
-	
-  gamma<-coef(summary(treat.model))[,1]
-	
-  #Estimating BetaOLS untreated
-  BetaOLSy0<-coef(summary(out.model0))[,1]
-  varBetaOLSy0<-diag((coef(summary(out.model0))[,2])^2)
-  sigma0hatOLS<-summary(out.model0)$sigma
-  #Estimating BetaOLS treated
-  BetaOLSy1<-coef(summary(out.model1))[,1]
-  varBetaOLSy1<-diag((coef(summary(out.model1))[,2])^2)
-  sigma1hatOLS<-summary(out.model1)$sigma
+  y.data <- data.frame()
+  t.data <- data.frame()
+  Yname <- ""
+  Tname <- ""
+  XYnames_preselection <- c()
+  XTnames_preselection <- c()
+  out.formula_postselection <- NULL
+  treat.formula_postselection <- NULL
 
-  u<-(Xz%*%gamma)
-  u0<-(Xz[z==0,]%*%gamma)
-  u1<-(Xz[z==1,]%*%gamma)
-  OLSlambda0<-solve(t(X0)%*%X0)%*%t(X0)%*%lambda0(u0)
-  l0z0<-mean(lambda0(u0))
-  l0<-mean(lambda0(u))
-  OLSlambda1<-solve(t(X1)%*%X1)%*%t(X1)%*%lambda1(u1)
-  l1z1<-mean(lambda1(u1))
-  l1<-mean(lambda1(u))
 
-  
-  t0<-gridrho.f(rho0,gridn,rho.plotrange,plot)
-  gridrho0<-t0[[1]]
-  nui0<-t0[[2]]
-  output$plot$nui0<-nui0
-  
-  output$plot$sigma0<-sigmaOLScor0(X0,sigma0hatOLS,n0,p,u0,gridrho0)
-  output$sigma0<-output$plot$sigma0[nui0]
-  output$rho0<-rho0
-  output$plot$gridrho0<-gridrho0
-  output$gridrho0<-gridrho0[nui0]
-  	
-  if(ACT==FALSE){
-  t1<-gridrho.f(rho1,gridn,rho.plotrange,plot)
-  gridrho1<-t1[[1]]
-  nui1<-t1[[2]]
-  output$rho1<-rho1
-  output$plot$gridrho1<-gridrho1
-  output$gridrho1<-gridrho1[nui1]
-  
-  output$plot$sigma1<-sigmaOLScor1(X1,sigma1hatOLS,n1,p,u1,gridrho1)
-  output$sigma1<-output$plot$sigma1[nui1]
-  output$plot$nui1<-nui1
+  # out.formula=y~x+I(x^2);treat.formula=z~x+I(x^2);rho0=c(0,0.3);rho1=c(0,0.3); param="ACE"
+
+  # Here we define data, and columnnames for XT XY Y and T, in case where the user chosen to 1)give formula and data or 2)X, Y and T seperately
+  if (!is.null(out.formula) & !is.null(treat.formula) & !is.null(data)) {
+    if (class(data) != "data.frame") {
+      stop("Data must be a data frame")
+    }
+
+    names <- all.vars(out.formula)
+    Yname <- names[1]
+    Ymodelmatrix <- as.data.frame(model.matrix.lm(out.formula, na.action = NULL)[, -1, drop = FALSE])
+    XYnames_preselection <- names(Ymodelmatrix)
+
+    names <- all.vars(treat.formula)
+    Tname <- names[1]
+    Tmodelmatrix <- as.data.frame(model.matrix.lm(treat.formula, na.action = NULL)[, -1, drop = FALSE])
+    XTnames_preselection <- names(Tmodelmatrix)
+
+    covariatesdataframe <- cbind(Ymodelmatrix, Tmodelmatrix)
+    data <- cbind(data[, Yname, drop = FALSE], data[, Tname, drop = FALSE], covariatesdataframe[, !duplicated(c(names(Ymodelmatrix), names(Tmodelmatrix))), drop = FALSE])
+    names(data)[1:2] <- c(Yname, Tname)
+  } else {
+    if ((is.null(X) | is.null(Y) | is.null(T))) {
+      stop("Variables cannot be NULL")
+    }
+    data <- data.frame(Y = Y, T = T, X)
+    Yname <- "Y"
+    Tname <- "T"
+    XYnames_preselection <- XTnames_preselection <- names(data[-c(1, 2)])
   }
-  	
-  output$DR$conf.bias<-vector(length=2)
-  names(output$DR$conf.bias)<-c('Min', 'Max')
-  output$DR$IdentInt<-output$DR$conf.bias
-  output$DR$ui<-output$DR$conf.bias
-  output$DR$naivci<-output$DR$conf.bias
-  output$OR<-output$DR
-  
-  ##################### NAIV ESTIMATES #####################
-  phat<-pnorm(Xz%*%gamma)
-  phat0<-phat[z==0]
-  if(ACT==TRUE){
-  	output$OR$naiv<-mean(y1-X1%*%BetaOLSy0)
-  	output$DR$naiv<-output$OR$naiv-sum((y0-X0%*%BetaOLSy0)/(1-phat0))/n1
-  }else{
-  	output$OR$naiv<-(sum(X1%*%BetaOLSy1-X1%*%BetaOLSy0)+sum(X0%*%BetaOLSy1-X0%*%BetaOLSy0))/N
-	phat1<-phat[z==1]
-	output$DR$naiv<-output$OR$naiv+(sum((y1-X1%*%BetaOLSy1)/phat1)-sum((y0-X0%*%BetaOLSy0)/(1-phat0)))/N
-  }
-		
-	##################### CONFOUNDING BIAS #####################
-	exgz1<-rep(1,n1)%*%X1/n1
-	exgz0<-rep(1,n0)%*%X0/n0
-	
-	
-	if(ACT==TRUE){
-	#Counfounding bias regression imputation ACT
-	f<-gridrho0*output$plot$sigma0*c(l1z1+exgz1%*%OLSlambda0)
-	names(f)<-as.character(round(gridrho0,4))
-	output$plot$OR$conf.bias.grid<-f
-	output$OR$conf.bias.grid<-f[nui0]
-	output$OR$conf.bias<-c(min(f[nui0]),max(f[nui0]))
-	#Total bias DR ACT
-	f<-gridrho0*output$plot$sigma0*l0*N/n1
-	names(f)<-as.character(round(gridrho0,4))
-	output$plot$DR$conf.bias.grid<-f
-	output$DR$conf.bias.grid<-f[nui0]
-	output$DR$conf.bias<-c(min(f[nui0]),max(f[nui0]))
-	
-	}else{
-	#Counfounding bias regression imputation ACE
-	f1<-gridrho1*output$plot$sigma1*c(rep(1,N)%*%X%*%OLSlambda1)/N
-	f2<-gridrho0*output$plot$sigma0*c(rep(1,N)%*%X%*%OLSlambda0)/N
-	output$plot$OR$conf.bias.grid<-matrix(rep(f1,length(f2)),nrow=length(f1))+t(matrix(rep(f2,length(f1)),nrow=length(f2)))
-	rownames(output$plot$OR$conf.bias.grid)<-as.character(round(gridrho1,4))
-	colnames(output$plot$OR$conf.bias.grid)<-as.character(round(gridrho0,4))
-	output$OR$conf.bias.grid<-output$plot$OR$conf.bias.grid[nui1,nui0]
-	output$OR$conf.bias<-c(min(output$OR$conf.bias.grid),max(output$OR$conf.bias.grid))
-	#Total bias DR ACE
-	f1<-gridrho1*output$plot$sigma1*l1
-	f2<-gridrho0*output$plot$sigma0*l0
-	output$plot$DR$conf.bias.grid<-matrix(rep(f1,length(f2)),nrow=length(f1))+t(matrix(rep(f2,length(f1)),nrow=length(f2)))
-	dimnames(output$plot$DR$conf.bias.grid)<-dimnames(output$plot$OR$conf.bias.grid)
-	output$DR$conf.bias.grid<-output$plot$DR$conf.bias.grid[nui1,nui0]
-	output$DR$conf.bias<-c(min(output$DR$conf.bias.grid),max(output$DR$conf.bias.grid))
-	}
-	
-	#Coef, NAIV ESTIMATES - BIAS (for each value of rho)
-	#Want the same rownames and colnames as conf.bias.grid
-	output$plot$DR$coef<-output$plot$DR$conf.bias.grid
-	output$plot$DR$coef<-c(output$DR$naiv)-output$plot$DR$conf.bias.grid
-	output$plot$OR$coef<-output$plot$OR$conf.bias.grid
-	output$plot$OR$coef<-c(output$OR$naiv)-output$plot$OR$conf.bias.grid
-	output$DR$coef<-output$DR$conf.bias.grid
-	output$DR$coef<-c(output$DR$naiv)-output$DR$conf.bias.grid
-	output$OR$coef<-output$OR$conf.bias.grid
-	output$OR$coef<-c(output$OR$naiv)-output$OR$conf.bias.grid
-	
-	#Identification interval, NAIV ESTIMATES - BIAS (interval)
-	output$OR$IdentInt<-rep(output$OR$naiv,2)-output$OR$conf.bias[2:1]
-	output$DR$IdentInt<-rep(output$DR$naiv,2)-output$DR$conf.bias[2:1]
-	
-	
-	#Standard errors
-	if(ACT==TRUE){
-		if(sand==TRUE){
-		output$OR$se<-sqrt(sandImpACT(X,y,z,BetaOLSy0,output$OR$naiv,n1,N,p))
-		}else{
-		output$OR$se<-sqrt((2*sigma1hatOLS^2+  (BetaOLSy1-BetaOLSy0)%*%cov(X1)%*%(BetaOLSy1-BetaOLSy0))/n1)
-		}
-		output$DR$se<-sqrt(sandACT(gamma,X,Xz,y,z,u,BetaOLSy0,phat,output$DR$naiv,n1,n0,N,p,pz))
-	}else{
-		if(sand==TRUE){
-		output$OR$se<-sqrt(sandImpACE(X,y,z,BetaOLSy0,BetaOLSy1,output$OR$naiv,N,p))
-			}else{
-		output$OR$se<-sqrt(rep(1,N)%*%X%*%(sigma1hatOLS^2*solve(t(X1)%*%X1)+sigma0hatOLS^2*solve(t(X0)%*%X0))%*%t(X)%*%rep(1,N)/N^2 + (BetaOLSy1-BetaOLSy0)%*%cov(X)%*%(BetaOLSy1-BetaOLSy0)/N)	
-			}
-		I<-(X%*%BetaOLSy1-X%*%BetaOLSy0+z*((y-X%*%BetaOLSy1)/phat)- (1-z)*((y-X%*%BetaOLSy0)/(1-phat)))-output$DR$naiv
-		output$DR$se<-sqrt(sum(I^2))/N
-		}
-	zalpha<-qnorm(1-alpha/2)
-	#Confidence intervals
-		if(ACT){
-		dim<-c(length(output$plot$OR$conf.bias.grid),2)
-		dnames<-list(names(output$plot$OR$conf.bias.grid),c('lower','upper'))
-	}else{
-		dim<-c(dim(output$plot$OR$conf.bias.grid),2)
-		dnames<-dimnames(output$plot$OR$conf.bias.grid)
-		dnames[[3]]<-c('lower','upper')
-		}
-		
-	output$plot$OR$ci<-array(c(c(output$OR$naiv-zalpha*output$OR$se)-output$plot$OR$conf.bias.grid, c(output$OR$naiv+zalpha*output$OR$se)-		
-						output$plot$OR$conf.bias.grid),dim=dim,dimnames=dnames)
-	output$plot$DR$ci<-array(c(c(output$DR$naiv-zalpha*output$DR$se)-output$plot$DR$conf.bias.grid, c(output$DR$naiv+zalpha*output$DR$se)-
-						output$plot$DR$conf.bias.grid),dim=dim,dimnames=dnames)
-						
-	if(ACT){
-		dim<-c(length(output$OR$conf.bias.grid),2)
-		dnames<-list(names(output$OR$conf.bias.grid),c('lower','upper'))
-	}else{
-		dim<-c(dim(output$OR$conf.bias.grid),2)
-		dnames<-dimnames(output$OR$conf.bias.grid)
-		dnames[[3]]<-c('lower','upper')
-		}
-		
-	output$OR$ci<-array(c(c(output$OR$naiv-zalpha*output$OR$se)-output$OR$conf.bias.grid, c(output$OR$naiv+zalpha*output$OR$se)-		
-						output$OR$conf.bias.grid),dim=dim,dimnames=dnames)
-	output$DR$ci<-array(c(c(output$DR$naiv-zalpha*output$DR$se)-output$DR$conf.bias.grid, c(output$DR$naiv+zalpha*output$DR$se)-
-						output$DR$conf.bias.grid),dim=dim,dimnames=dnames)
+  # }
 
-	output$OR$ui<-c(min(output$OR$ci),max(output$OR$ci))
-	output$DR$ui<-c(min(output$DR$ci),max(output$DR$ci))
-	output$OR$naivci<-output$OR$naiv+c(-zalpha*output$OR$se,zalpha*output$OR$se)
-	output$DR$naivci<-output$DR$naiv+c(-zalpha*output$DR$se,zalpha*output$DR$se)
-	output$plot$gridn<-gridn
-	
-	names(output$OR$ui)<-c('lower','upper')
-	names(output$OR$naivci)<-c('lower','upper')
-	names(output$OR$conf.bias)<-c('lower','upper')
-	names(output$OR$IdentInt)<-c('lower','upper')
-	names(output$DR$ui)<-c('lower','upper')
-	names(output$DR$naivci)<-c('lower','upper')
-	names(output$DR$conf.bias)<-c('lower','upper')
-	names(output$DR$IdentInt)<-c('lower','upper')
-	
-	
-	output$call <- match.call()
-	class(output)<-"uicausal"
-return(output)
+  if (subset != "noselection" & (length(XYnames_preselection) <= 1 | length(XTnames_preselection) <= 1)) {
+    stop("Variable selection cannot be performed if the number of covariates is not bigger than one.")
+  }
+
+  # which indecies from XY and XT?
+  XYhat <- XY1hat <- XY0hat <- XThat <- c()
+  if (!subset == "noselection") {
+    XY1hat <- vs.hdm(data[data[, Tname] == 1, Yname], data[data[, Tname] == 1, XYnames_preselection])
+    if (!missing) {
+        XY0hat <- vs.hdm(data[data[, Tname] == 0, Yname], data[data[, Tname] == 0, XYnames_preselection])
+     }
+    # XY1hat=vs.glmnet(data[data[,Tname]==1,Yname],data[data[,Tname]==1,XYnames_preselection],alpha=regularization_alpha)
+    # XY0hat=vs.glmnet(data[data[,Tname]==0,Yname],data[data[,Tname]==0,XYnames_preselection],alpha=regularization_alpha)
+
+    XYhat <- union(XY1hat, XY0hat)
+  }
+  if (!subset == "noselection" & !subset == "single") {
+    XThat <- vs.glmnet(data[, Tname], data[, XTnames_preselection], alpha = regularization_alpha)
+  }
+
+
+  if (subset != "noselection" & (length(XYhat) == 0 | length(XThat) == 0)) {
+    stop("No covariates has been selected for at least one of the nuisance models.")
+  }
+
+  outY_XY <- outT_XT <- ""
+  if (subset == "noselection") {
+    outY_XY <- XYnames_preselection
+    outT_XT <- XTnames_preselection
+  } else if (subset == "single") {
+    outY_XY <- XYnames_preselection[, XYhat]
+    outT_XT <- XYnames_preselection[, XYhat]
+  } else if (subset == "double") {
+    outY_XY <- union(XYnames_preselection[XYhat], XTnames_preselection[XThat])
+    outT_XT <- union(XYnames_preselection[XYhat], XTnames_preselection[XThat])
+  } else {
+    outY_XY <- XYnames_preselection[XYhat]
+    outT_XT <- XTnames_preselection[XThat]
+  }
+
+  FUN <- NULL
+  if (param == "ACE") {
+    FUN <- ui.ace
+  } else if (param == "ACT") {
+    FUN <- ui.act
+  } else if (param == "Y0") {
+    FUN <- ui.y0
+  } else if (param == "Y1") {
+    FUN <- ui.y1
+  } else if (param == "Y0T1") {
+    FUN <- ui.y0t1
+  } else {
+    FUN <- ui.y1t0
+  }
+
+  out.formula_postselection <- paste(Yname, paste(outY_XY, collapse = "+"), sep = " ~ ")
+  treat.formula_postselection <- paste(Tname, paste(outT_XT, collapse = "+"), sep = " ~ ")
+
+
+  # t.data<-get_all_vars(treat.formula_postselection,data=data)
+  # y.data<-get_all_vars(out.formula_postselection,data=data)
+  t.data <- data[, c(Tname, outT_XT)]
+  y.data <- data[, c(Yname, outY_XY)]
+  #  remove individuals with partial missing data in the covariates
+  if (sum(complete.cases(y.data) == FALSE) > 0) {
+    warning(paste("Partial missing values in covariates! ", sum(complete.cases(y.data) == FALSE), "individual(s) are removed from the outcome regression."))
+    y.data <- y.data[complete.cases(y.data), , drop = FALSE]
+  }
+  if (sum(complete.cases(t.data) == FALSE) > 0) {
+    warning(paste("Partial missing values in covariates. ", sum(complete.cases(t.data) == FALSE), "individual(s) are removed from the propensity score regression."))
+    t.data <- t.data[complete.cases(t.data), , drop = FALSE]
+  }
+
+
+
+  treat.model <- glm(treat.formula_postselection, family = binomial(link = "probit"), data = t.data)
+  # XThatdesign<-model.matrix(treat.model)
+  gamma <- coef(summary(treat.model))[, 1]
+
+
+
+  out.formula <- out.formula_postselection
+  output <- FUN(out.formula, y.data, gamma, t.data,
+    rho0 = rho0, rho1 = rho1,
+    sand, gridn, rho.plotrange, alpha, sigma_correction
+  )
+
+  output$treat.model <- treat.model
+  output$XYhat <- XYhat
+  output$XThat <- XThat
+  return(output)
 }
-
-
