@@ -1,26 +1,17 @@
 # hdim.ui
 hdim.ui - R package for sensitivity analysis in high-dimensional causal inference and missing outcome data contexts
+# prepare data
+Kennedy's choice of variables:
+(1) age, (2) education (less than high school, high
+                        school, greater than high school), (3) white (yes/no), (4) hispanic (yes/no), (5) foreign (yes/no),
+(6) alcohol use, (7) married (yes/no), (8) liver birth order (one, two, greater than 2), (9) number
+of prenatal visits.3
 
 
-library(devtools)
-setwd("/home/niloofarmoosavi/Downloads/Paper four")
-install("ui")
-document("ui")
-# devtools::document()
-
-# prepare data####
-
+```
 library(foreign)
 data=read.dta("C_2010_JOE-dataRS5K.dta")
 length(names(data))
-
-#Kennedy's choice of variables
-# (1) age, (2) education (less than high school, high
-#                         school, greater than high school), (3) white (yes/no), (4) hispanic (yes/no), (5) foreign (yes/no),
-# (6) alcohol use, (7) married (yes/no), (8) liver birth order (one, two, greater than 2), (9) number
-# of prenatal visits.3
-
-
 
 categoricalCovariates=c("dmar","mwhite","mhispan","foreignb","alcohol","dmeduc","dlivord")
 #quantitative
@@ -38,10 +29,6 @@ newData$dlivord[data$dlivord ==2] = "two"
 newData$dlivord[data$dlivord >2] = "gttwo"
 newData$dlivord=as.factor(newData$dlivord)
 
-length(names(newData))
-# withInteractions= model.matrix(~ .^2, data = newData[,c(categoricalCovariates,continuousCovariates)])[,-1]
-# higherorder=poly(cbind(newData[,"dmage"], newData[,"nprevist"]),degree=3)
-
 withInteractions= model.matrix(~ .^30, data = newData[,c(categoricalCovariates,continuousCovariates)],raw = TRUE)[,-1]
 higherorder=poly(cbind(newData[,"dmage"], newData[,"nprevist"]),degree=20,raw = TRUE)
 
@@ -56,20 +43,13 @@ ncol(covariates)
 Y=newData[,"dbirwt"]
 T=ifelse(newData[,"T"]>=1,1,0)
 
-# ui_real=ui(X=covariates,Y=(Y),T=(T),rho0=c(-0.1,0.1),rho1=c(-0.1,0.1),subset="refit",param="ACE",regularization_alpha = 1)
 ui_real=ui.causal(X=covariates,Y=(Y),T=(T),rho0=c(-0.15,0.15),rho1=c(-0.15,0.15),
                   # subset="double",
                   subset = "refit", sigma_correction = 'new',
                    param="ACE", rho.plotrange = c(-0.25, 0.25),regularization_alpha = 1)
 
 
-# ui_real=ui.causal(X=covariates,Y=(Y),T=(T),rho0=c(-0.15,0.15),rho1=c(-0.15,0.15),subset="refit",param="ACE", rho.plotrange = c(-0.25, 0.25),regularization_alpha = 1)
-
 plot(ui_real,ylab="ACE")
-plot.uicausal(ui_real,ylab="ACE")
-
-# ui_y0t1=ui(X=covariates,Y=(Y),T=(T),rho0=c(-0.35,0.1),gridn=41,subset="refit",param="Y0T1",regularization_alpha = 1)
-# ui_y1t0=ui(X=covariates,Y=(Y),T=(T),rho1=c(-0.35,0.1),gridn=41,subset="refit",param="Y1T0",regularization_alpha = 1)
 ui_y0t1=ui.causal(X=covariates,Y=(Y),T=(T),rho0=c(-0.3,0.1),rho.plotrange =c(-0.3,0.1),gridn=41,
                   # subset="double",
                   subset = "refit", sigma_correction = 'new',
@@ -116,3 +96,4 @@ ui_real2$DR$coef["0","0"]
 ui_real2$DR$ci["0","0",1]
 # -166.2589
 ui_real2$DR$ci["0","0",2]
+```
