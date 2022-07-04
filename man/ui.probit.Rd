@@ -27,7 +27,7 @@ likelihood.}
 
 \item{progress}{If TRUE prints out process time for each maximization of the likelihood.}
 
-\item{max.grid}{Maximum distance between two elements in \code{rho}, if two wide there can 
+\item{max.grid}{Maximum distance between two elements in \code{rho}, if two wide there can
 difficulties with convergence of the maximum likelihood.}
 
 \item{alpha}{Default 0.05 corresponding to a confidence level of 95 for CI and UI.}
@@ -59,30 +59,30 @@ are derived by maximum likelihood. Note that \code{rho}=0 render the same result
 a complete case analysis.
 }
 \details{
-In order to visualize the results, you can use \code{\link{plot.uiprobit}} 
+In order to visualize the results, you can use \code{\link{plot.uiprobit}}
 or \code{\link{profile.uiprobit}}.
 }
 \examples{
 library(MASS)
-n<-500
+n <- 500
 
-delta<-c(0.5,0.6,0.1,-1,1)
-beta<-c(-0.3,-0.5,0,-0.4,-0.3)
+delta <- c(0.5, 0.6, 0.1, -1, 1)
+beta <- c(-0.3, -0.5, 0, -0.4, -0.3)
 
-X<-cbind(rep(1,n),rnorm(n),runif(n),rbinom(n,2,0.5),rbinom(n,1,0.5))
-x<-X[,-1]
-rho=0.4
-error<-mvrnorm(n,c(0,0),matrix(c(1,rho,rho,1),2))
+X <- cbind(rep(1, n), rnorm(n), runif(n), rbinom(n, 2, 0.5), rbinom(n, 1, 0.5))
+x <- X[, -1]
+rho <- 0.4
+error <- mvrnorm(n, c(0, 0), matrix(c(1, rho, rho, 1), 2))
 
-zstar<-X\%*\%delta+error[,1]
-z<-as.numeric(zstar>0)
+zstar <- X \%*\% delta + error[, 1]
+z <- as.numeric(zstar > 0)
 
-ystar<-X\%*\%beta+error[,2]
-y<-as.integer(ystar>0)
-y[z==0]<-NA
-data=data.frame(y=y,x1=x[,1],x2=x[,2],x3=x[,3],x4=x[,4])
+ystar <- X \%*\% beta + error[, 2]
+y <- as.integer(ystar > 0)
+y[z == 0] <- NA
+data <- data.frame(y = y, x1 = x[, 1], x2 = x[, 2], x3 = x[, 3], x4 = x[, 4])
 
-m<-ui.probit(y~x1+x2+x3+x4,data=data,rho=c(0,0.5))
+m <- ui.probit(y ~ x1 + x2 + x3 + x4, data = data, rho = c(0, 0.5))
 m
 plot(m)
 profile(m)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/lambda1.R
 \name{lambda1}
 \alias{lambda1}
-\title{Inverse Mills rato}
+\title{Inverse mills ratio d(x)/p(x) which is the standard normal density function divided by the standard normal cumulative distribution}
 \usage{
 lambda1(x)
 }
@@ -10,5 +10,5 @@ lambda1(x)
 \item{x}{Vector}
 }
 \description{
-This function allows you to calculate the inverse Mills ratio.
+This is a support function for \code{\link{ui.y1}}, \code{\link{ui.y1t0}} and \code{\link{ui.y0t1}} that allows you to calculate the inverse Mills ratio d(x)/p(x).
 }

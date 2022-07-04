@@ -12,7 +12,7 @@
 #' @param gridn Number of fixed points within the \code{rho}  intervals for which sigma should be estimated.
 #' @param rho.plotrange  An interval larger than \code{rho}. This specifies the range of value (on x axis) where the ui plot will be made using \code{\link{plot.ui}}.
 #' @param alpha Default 0.05 corresponding to a confidence level of 95 for CI and UI.
-#' @param sigma_correction A logical variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias.
+#' @param sigma_correction A character variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias and if so whether we use the old or new correction method. It can take values 'non', 'old' or 'new'.
 #'
 #' @details In order to visualize the results, you can use \code{\link{plot.ui}}. See the manual for \code{\link{ui}} for details and output.
 #'
@@ -49,9 +49,10 @@ ui.missing <- function(out.formula = NULL,
                        sigma_correction = TRUE, ...) {
   treat.formula <- NULL
   if (!is.null(out.formula) & !is.null(data)) {
+    names <- all.vars(out.formula)
+    Yname <- names[1]
     if (is.null(mis.formula)) {
-      names <- all.vars(out.formula)
-      Yname <- names[1]
+
 
       char <- as.character(out.formula)
       mis.formula <- as.formula(paste("z~", char[!char %in% c("~", Yname)]))

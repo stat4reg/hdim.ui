@@ -2,7 +2,7 @@
 % Please edit documentation in R/interv.p.R
 \name{interv.p}
 \alias{interv.p}
-\title{Print interval in parantesis}
+\title{Print function for intervals}
 \usage{
 interv.p(v, digits = 3)
 }
@@ -12,5 +12,5 @@ interv.p(v, digits = 3)
 \item{digits}{Number of decimals.}
 }
 \description{
-This function allows you to print an interval (vector of two elements) in a parantesis single element.
+This is a support function for \code{\link{print.ui}} which allows you to print an interval (vector of two elements) using parenthesis.
 }

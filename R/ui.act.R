@@ -10,7 +10,7 @@
 #' @param gridn Number of fixed points within the \code{rho0} interval for which sigma1 should be estimated.
 #' @param rho.plotrange an interval larger than \code{rho0} for the plot using \code{\link{plot.ui}}.
 #' @param alpha Default 0.05 corresponding to a confidence level of 95 for CI and UI.
-#' @param sigma_correction A logical variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias. Default value is TRUE.
+#' @param sigma_correction A character variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias and if so whether we use the old or new correction method. It can take values 'non', 'old' or 'new'.
 #'
 #' @importFrom stats binomial coef complete.cases cov get_all_vars glm lm model.matrix pnorm qnorm
 #' @export
@@ -142,7 +142,7 @@ ui.act <- function(out.formula, y.data,
 
 
   output$call <- match.call()
-  class(output) <- "uicausal"
+  class(output) <- "ui"
 
   return(output)
 }

@@ -37,7 +37,7 @@ ui.y1t0(
 
 \item{alpha}{Default 0.05 corresponding to a confidence level of 95 for CI and UI.}
 
-\item{sigma_correction}{A logical variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias. Default value is TRUE.}
+\item{sigma_correction}{A character variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias and if so whether we use the old or new correction method. It can take values 'non', 'old' or 'new'.}
 }
 \description{
 This is a support function for \code{\link{ui.causal}} and derives the uncertainty intervals for E(Y1|T=0).

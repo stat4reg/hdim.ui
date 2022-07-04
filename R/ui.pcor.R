@@ -6,11 +6,11 @@
 #' @param mis.formula Formula for missingness mechanism. If NULL the same covariates as in the outcome regression will be used.
 #' @param data data.frame containing the variables in the formula.
 #' @param rho The min and the max of the sensitivity parameter.
-#' @param rho2 The min and the max of the sensitivity parameter  \code{rho2} in the model for missing in the predictor of interest within missing data mechanism C. The same as \code{rho} by default.}
+#' @param rho2 The min and the max of the sensitivity parameter  \code{rho2} in the model for missing in the predictor of interest within missing data mechanism C. The same as \code{rho} by default.
 #' @param alpha Significance level. Default 0.05 corresponding to a confidence level of 95% for CI and UI.
 #' @param gridn The number of distinct points  for \code{rho} at which confidence intervals should be constructed. Default is 101.
 #' @param gridn2 The number of distinct points for \code{rho2} at which confidence intervals should be constructed for missing data mechanism C. Default is 11.
-#' @details In order to visualize the results, you can use \code{\link{plot.uipcor}}. In the initial publication (see reference), the sensitivity parameter is called \gamma,  while the function denote the sensitivity paramter as \code{rho} for the correspondence with other functions in the package.
+#' @details In order to visualize the results, you can use \code{\link{plot.uipcor}}. In the initial publication (see reference), the sensitivity parameter is called \code{gamma},  while the function denote the sensitivity paramter as \code{rho} for the correspondence with other functions in the package.
 #' @return A list containing:
 #' \item{call}{The matched call}
 #' \item{out.formula}{Regression formula where one variable of interest is the outcome and another variable of interest is the first predictor. Other predictors are variables in the adjustment set. }

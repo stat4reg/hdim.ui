@@ -44,7 +44,7 @@ ui.missing(
 
 \item{alpha}{Default 0.05 corresponding to a confidence level of 95 for CI and UI.}
 
-\item{sigma_correction}{A logical variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias.}
+\item{sigma_correction}{A character variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias and if so whether we use the old or new correction method. It can take values 'non', 'old' or 'new'.}
 }
 \description{
 This function allows you to derive uncertainty intervals for E(Y) with Y being an outcome with missing values not at random. The function uses a regression imputation estimator and a doubly robust estimator. The uncertainty intervals can be used as a sensitivity analysis to unconfoundedness. Note that \code{rho}=0 render the same results as assuming all confounders of Y and missingness indicator variable are observed.

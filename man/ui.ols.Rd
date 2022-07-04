@@ -45,27 +45,26 @@ A list containing:
 This function allows you to derive uncertainty intervals for OLS regression when there is missing data in the continuous outcome. The uncertainty intervals can be used as a sensitivity analysis to ignorability (missing at random). Note that rho=0 render the same results as a complete case analysis.
 }
 \details{
-In order to visualize the results, you can use \code{\link{plot.uiols}}, 
+In order to visualize the results, you can use \code{\link{plot.uiols}},
 or \code{\link{profile.uiols}}.
 }
 \examples{
 library(MASS)
-n<-500
-delta<-c(0.5,0.3,0.1)
-beta<-c(0.8,-0.2,0.3)
-X<-cbind(rep(1,n),rnorm(n),rbinom(n,1,0.5))
-x<-X[,-1]
-rho=0.4
-error<-mvrnorm(n,c(0,0),matrix(c(1,rho*2,rho*2,4),2))
-zstar<-X\%*\%delta+error[,1]
-z<-as.numeric(zstar>0)
-y<-X\%*\%beta+error[,2]
-y[z==0]<-NA
-data<-data.frame(y,x,z)
-ui<-ui.ols(y~X1+X2,data=data,rho=c(-0.5,0.5))
+n <- 500
+delta <- c(0.5, 0.3, 0.1)
+beta <- c(0.8, -0.2, 0.3)
+X <- cbind(rep(1, n), rnorm(n), rbinom(n, 1, 0.5))
+x <- X[, -1]
+rho <- 0.4
+error <- mvrnorm(n, c(0, 0), matrix(c(1, rho * 2, rho * 2, 4), 2))
+zstar <- X \%*\% delta + error[, 1]
+z <- as.numeric(zstar > 0)
+y <- X \%*\% beta + error[, 2]
+y[z == 0] <- NA
+data <- data.frame(y, x, z)
+ui <- ui.ols(y ~ X1 + X2, data = data, rho = c(-0.5, 0.5))
 ui
 plot(ui)
-
 }
 \references{
 Genbäck, M., Stanghellini, E., de Luna, X. (2015). Uncertainty Intervals for Regression Parameters with Non-ignorable Missingness in the Outcome. \emph{Statistical Papers}, 56(3), 829-847.

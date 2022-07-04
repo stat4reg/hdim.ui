@@ -10,7 +10,7 @@
 #' @param gridn Number of fixed points within the \code{rho1} interval for which sigma1 should be estimated.
 #' @param rho.plotrange an interval larger than \code{rho1} for the plot using \code{\link{plot.ui}}.
 #' @param alpha Default 0.05 corresponding to a confidence level of 95 for CI and UI.
-#' @param sigma_correction A logical variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias. Default value is TRUE.
+#' @param sigma_correction A character variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias and if so whether we use the old or new correction method. It can take values 'non', 'old' or 'new'.
 #'
 #' @importFrom stats binomial coef complete.cases cov get_all_vars glm lm model.matrix pnorm qnorm
 #' @export
@@ -61,11 +61,13 @@ ui.y1t0 <- function(out.formula, y.data,
   output$plot$nui1 <- nui1
 
 
-  if (sigma_correction) {
-    output$plot$sigma1 <- sigmaOLScor1(Xy.design[t == 1, ], sigma1hatOLS, n1, p, u1, gridrho1)
-  } else {
-    output$plot$sigma1 <- sigma1hatOLS
+
+  if (sigma_correction=='non') { output$plot$sigma1 <- sigma1hatOLS
+  } else if (sigma_correction=='old') {output$plot$sigma1 <- sigmaOLScor1(Xy.design[t == 1, ], sigma1hatOLS, n1, p, u1, gridrho1)
+  }else if (sigma_correction=='new'){output$plot$sigma1 <- sigmaOLScor1new(sigma1hatOLS,u1, gridrho1)
   }
+
+
   output$sigma1 <- output$plot$sigma1[nui1]
   output$rho1 <- rho1
 
@@ -171,7 +173,7 @@ ui.y1t0 <- function(out.formula, y.data,
 
 
   output$call <- match.call()
-  class(output) <- "uicausal"
+  class(output) <- "ui"
 
   return(output)
 }

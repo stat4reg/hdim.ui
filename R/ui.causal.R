@@ -15,7 +15,7 @@
 #' @param gridn Number of fixed points within the \code{rho0} and \code{rho1} intervals for which sigma0 and sigma1 should be estimated.
 #' @param rho.plotrange  An interval larger than \code{rho0} and \code{rho1}. This specifies the range of value (on x axis) where the ui plot will be made using \code{\link{plot.ui}}.
 #' @param alpha Default 0.05 corresponding to a confidence level of 95 for CI and UI.
-#' @param sigma_correction A logical variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias.
+#' @param sigma_correction A character variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias and if so whether we use the old or new correction method. It can take values 'non', 'old' or 'new'.
 #' @param missing  This argument should not be changed manually. A logical variable which is FALSE by default and TRUE if this function is called withing the function \code{\link{ui.missing}}.
 #'
 #' @details In order to visualize the results, you can use \code{\link{plot.ui}}. Details about estimators can be found in Genbäck and de Luna (2018)
@@ -75,12 +75,12 @@
 #' mean(y1 - y0)
 #' ui <- ui.causal(y ~ x + I(x^2), t ~ x + I(x^2),
 #'   data = data, rho0 = c(0, 0.4), rho1 = c(0, 0.4),
-#'   subset = "double", param = "ACE", sigma_correction = TRUE
+#'   subset = "double", param = "ACE", sigma_correction = 'new'
 #' )
 #' ui <- ui.causal(
 #'   Y = y, T = t, X = cbind(x, x^2),
 #'   rho0 = c(0, 0.4), rho1 = c(0, 0.4),
-#'   subset = "double", param = "ACE", sigma_correction = TRUE
+#'   subset = "double", param = "ACE", sigma_correction = 'new'
 #' )
 #' ui
 #' plot(ui)
@@ -92,7 +92,7 @@
 #' ui <- ui.causal(
 #'   Y = y, T = t, X = cbind(x, x^2),
 #'   rho0 = c(0, 0.4), rho1 = c(0, 0.4),
-#'   subset = "noselection", param = "ACT", sigma_correction = TRUE
+#'   subset = "noselection", param = "ACT", sigma_correction = 'new'
 #' )
 #' ui
 #' plot(ui)
@@ -105,7 +105,7 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
                       sand = TRUE, gridn = 21,
                       rho.plotrange = c(-0.5, 0.5), alpha = 0.05,
                       regularization_alpha = 1,
-                      sigma_correction = TRUE, missing = FALSE) {
+                      sigma_correction = 'new', missing = FALSE) {
   # comment this for now, one should be carefull when to use rho0 and when rho1, also it might be that we dont need ui in the plot (infer=F)
   # if (min(rho.plotrange) >= min(rho0)) {
   #   	warning('Lower bound of plotrange is >= lower bound of UI, it needs to be less than. You will not be able to plot this object.')

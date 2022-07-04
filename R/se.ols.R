@@ -7,10 +7,9 @@
 #' @param gridrho Values of rho.
 #' @export
 
-se.ols<-function(X,sigmaOLScor,u,gridrho){
-#M<-sigmaOLScor*sqrt(1-gridrho^2*(t(u)%*%lambda1(u)+t(lambda1(u))%*%lambda1(u))/n)
-M<-sigmaOLScor*sqrt(1-gridrho^2*(mean(u*lambda1(u))-mean(lambda1(u)^2)))
-Di<- sqrt(diag(solve(t(X)%*%X)))
-matrix(M,ncol=1)%*%matrix(Di,nrow=1)
- }
- 
+se.ols <- function(X, sigmaOLScor, u, gridrho) {
+  # M<-sigmaOLScor*sqrt(1-gridrho^2*(t(u)%*%lambda1(u)+t(lambda1(u))%*%lambda1(u))/n)
+  M <- sigmaOLScor * sqrt(1 - gridrho^2 * (mean(u * lambda1(u)) - mean(lambda1(u)^2)))
+  Di <- sqrt(diag(solve(t(X) %*% X)))
+  matrix(M, ncol = 1) %*% matrix(Di, nrow = 1)
+}

@@ -20,7 +20,7 @@ ui.causal(
   rho.plotrange = c(-0.5, 0.5),
   alpha = 0.05,
   regularization_alpha = 1,
-  sigma_correction = TRUE,
+  sigma_correction = "new",
   missing = FALSE
 )
 }
@@ -53,7 +53,7 @@ ui.causal(
 
 \item{alpha}{Default 0.05 corresponding to a confidence level of 95 for CI and UI.}
 
-\item{sigma_correction}{A logical variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias.}
+\item{sigma_correction}{A character variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias and if so whether we use the old or new correction method. It can take values 'non', 'old' or 'new'.}
 
 \item{missing}{This argument should not be changed manually. A logical variable which is FALSE by default and TRUE if this function is called withing the function \code{\link{ui.missing}}.}
 }
@@ -117,12 +117,12 @@ data <- data.frame(y, t, x)
 mean(y1 - y0)
 ui <- ui.causal(y ~ x + I(x^2), t ~ x + I(x^2),
   data = data, rho0 = c(0, 0.4), rho1 = c(0, 0.4),
-  subset = "double", param = "ACE", sigma_correction = TRUE
+  subset = "double", param = "ACE", sigma_correction = 'new'
 )
 ui <- ui.causal(
   Y = y, T = t, X = cbind(x, x^2),
   rho0 = c(0, 0.4), rho1 = c(0, 0.4),
-  subset = "double", param = "ACE", sigma_correction = TRUE
+  subset = "double", param = "ACE", sigma_correction = 'new'
 )
 ui
 plot(ui)
@@ -134,7 +134,7 @@ mean(y1[t == 1] - y0[t == 1])
 ui <- ui.causal(
   Y = y, T = t, X = cbind(x, x^2),
   rho0 = c(0, 0.4), rho1 = c(0, 0.4),
-  subset = "noselection", param = "ACT", sigma_correction = TRUE
+  subset = "noselection", param = "ACT", sigma_correction = 'new'
 )
 ui
 plot(ui)

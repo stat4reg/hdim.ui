@@ -11,7 +11,7 @@ vs.glmnet(Y, X, alpha)
 
 \item{X}{Covariate matrix.}
 
-\item{alpha}{Parameter that passes to the glmnet function. It is for the elastic net mixing parameter with range [0,1]. alpha=1 is lasso regression (default) and alpha=0 is ridge regression.}
+\item{alpha}{Parameter that passes to the glmnet function. It is for the elastic net mixing parameter with range \link{0,1}. alpha=1 is lasso regression (default) and alpha=0 is ridge regression.}
 }
 \description{
 This is a support function for \code{\link{ui.causal}} and \code{\link{ui.missing}} and performs covariate selection using probit or linear lasso regression depending on if the output variable is binary or not. The lasso regression is preformed using the glmnet package where the regularization parameter is found by cross-validation.

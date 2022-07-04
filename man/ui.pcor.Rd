@@ -21,7 +21,9 @@ ui.pcor(
 
 \item{rho}{The min and the max of the sensitivity parameter.}
 
-\item{alpha}{Significance level. Default 0.05 corresponding to a confidence level of 95% for CI and UI.}
+\item{rho2}{The min and the max of the sensitivity parameter  \code{rho2} in the model for missing in the predictor of interest within missing data mechanism C. The same as \code{rho} by default.}
+
+\item{alpha}{Significance level. Default 0.05 corresponding to a confidence level of 95\% for CI and UI.}
 
 \item{gridn}{The number of distinct points  for \code{rho} at which confidence intervals should be constructed. Default is 101.}
 
@@ -51,7 +53,7 @@ This function is used to calculate uncertainty intervals for partial correlation
 The two variables of interest might have missing data according to the three missing data mechanisms (see reference). Data for the variables in the adjustment set should be completely observed.
 }
 \details{
-In order to visualize the results, you can use \code{\link{plot.uipcor}}. In the initial publication (see reference), the sensitivity parameter is called \gamma,  while the function denote the sensitivity paramter as \code{rho} for the correspondence with other functions in the package.
+In order to visualize the results, you can use \code{\link{plot.uipcor}}. In the initial publication (see reference), the sensitivity parameter is called \code{gamma},  while the function denote the sensitivity paramter as \code{rho} for the correspondence with other functions in the package.
 }
 \examples{
 library(MASS)
