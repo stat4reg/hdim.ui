@@ -1,11 +1,11 @@
-Package: ui
+Package: hdim.ui
 Title: Uncertainty interval for some causal parameters or for expected value of a variable with missing values (missing not at random) in a low or high dimensional setting
 Version: 0.0.0.001
 Authors@R: 
     person(given = "Niloofar",
            family = "Moosavi",
            role = c("aut", "cre"),
-           email = "niloofar.M=moosavi@umu.se",
+           email = "niloofar.moosavi@umu.se",
            comment = c(ORCID = "YOUR-ORCID-ID"))
 Description: This package allows you to derive uncertainty intervals for average of a variable with missing values or some causal parameters in an observational study including the average causal effect (ACE) or the average causal effect on the treated (ACT). It uses a regression imputation estimator and a doubly robust estimator. The uncertainty intervals can be used as a sensitivity analysis to unconfoundedness. Look at the manual for the main functions ui_causal and ui_missing for description and examples.
 License: `use_mit_license()`, `use_gpl3_license()` or friends to
