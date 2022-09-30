@@ -4,7 +4,7 @@
 #' @param X Covariate matrix.
 #' @param Y outcome vector.
 #' @param alpha Parameter that passes to the glmnet function. It is for the elastic net mixing parameter with range [0,1]. alpha=1 is lasso regression (default) and alpha=0 is ridge regression.
-#' @importFrom glmnet cv.glmnet
+#' @import glmnet
 #' @export
 
 
