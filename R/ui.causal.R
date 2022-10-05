@@ -179,21 +179,30 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
   }
 
 
-  if (subset != "noselection" & (length(XYhat) == 0 | length(XThat) == 0)) {
-    stop("No covariates has been selected for at least one of the nuisance models.")
-  }
+  # if (subset != "noselection" & (length(XYhat) == 0 | length(XThat) == 0)) {
+  #   stop("No covariates has been selected for at least one of the nuisance models.")
+  # }
 
   outY_XY <- outT_XT <- ""
   if (subset == "noselection") {
     outY_XY <- XYnames_preselection
     outT_XT <- XTnames_preselection
   } else if (subset == "single") {
+    if(length(XYhat) == 0) {
+      stop("No covariates has been selected for the outcome models.")
+    }
     outY_XY <- XYnames_preselection[, XYhat]
     outT_XT <- XYnames_preselection[, XYhat]
   } else if (subset == "double") {
+   if( (length(XYhat) == 0 | length(XThat) == 0)) {
+        stop("No covariates has been selected for at least one of the nuisance models.")
+      }
     outY_XY <- union(XYnames_preselection[XYhat], XTnames_preselection[XThat])
     outT_XT <- union(XYnames_preselection[XYhat], XTnames_preselection[XThat])
   } else {
+    if( (length(XYhat) == 0 | length(XThat) == 0)) {
+      stop("No covariates has been selected for at least one of the nuisance models.")
+    }
     outY_XY <- XYnames_preselection[XYhat]
     outT_XT <- XTnames_preselection[XThat]
   }
