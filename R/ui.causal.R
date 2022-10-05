@@ -248,5 +248,10 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
   output$treat.model <- treat.model
   output$XYhat <- XYhat
   output$XThat <- XThat
+
+  output$call <- match.call()
+  class(output) <- "ui"
+
+
   return(output)
 }
