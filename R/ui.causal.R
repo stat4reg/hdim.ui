@@ -191,8 +191,8 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
     if(length(XYhat) == 0) {
       stop("No covariates has been selected for the outcome models.")
     }
-    outY_XY <- XYnames_preselection[, XYhat]
-    outT_XT <- XYnames_preselection[, XYhat]
+    outY_XY <- XYnames_preselection[XYhat]
+    outT_XT <- XYnames_preselection[XYhat]
   } else if (subset == "double") {
    if( (length(XYhat) == 0 | length(XThat) == 0)) {
         stop("No covariates has been selected for at least one of the nuisance models.")
