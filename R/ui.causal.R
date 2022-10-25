@@ -136,12 +136,12 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
 
     names <- all.vars(out.formula)
     Yname <- names[1]
-    Ymodelmatrix <- as.data.frame(model.matrix.lm(out.formula, na.action = NULL)[, -1, drop = FALSE])
+    Ymodelmatrix <- as.data.frame(model.matrix.lm(out.formula,data=data, na.action = NULL)[, -1, drop = FALSE])
     XYnames_preselection <- names(Ymodelmatrix)
 
     names <- all.vars(treat.formula)
     Tname <- names[1]
-    Tmodelmatrix <- as.data.frame(model.matrix.lm(treat.formula, na.action = NULL)[, -1, drop = FALSE])
+    Tmodelmatrix <- as.data.frame(model.matrix.lm(treat.formula,data=data, na.action = NULL)[, -1, drop = FALSE])
     XTnames_preselection <- names(Tmodelmatrix)
 
     covariatesdataframe <- cbind(Ymodelmatrix, Tmodelmatrix)
