@@ -39,6 +39,7 @@ ui.act <- function(out.formula, y.data,
   output$plot <- list()
   output$plot$plot <- plot
 
+  output$out.model0 <- output0$out.model0
 
   output$plot$nui0 <- output0$plot$nui0
   output$plot$sigma0 <- output0$plot$sigma0

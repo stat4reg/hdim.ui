@@ -53,6 +53,8 @@ ui.ace <- function(out.formula, y.data,
   output$plot$plot <- plot
 
 
+  output$out.model0 <- output0$out.model0
+  output$out.model1 <- output1$out.model1
 
   output$plot$nui0 <- output0$plot$nui0
   output$plot$sigma0 <- output0$plot$sigma0
