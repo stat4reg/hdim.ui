@@ -15,8 +15,11 @@
 #' @param gridn Number of fixed points within the \code{rho0} and \code{rho1} intervals for which sigma0 and sigma1 should be estimated.
 #' @param rho.plotrange  An interval larger than \code{rho0} and \code{rho1}. This specifies the range of value (on x axis) where the ui plot will be made using \code{\link{plot.ui}}.
 #' @param alpha Default 0.05 corresponding to a confidence level of 95 for CI and UI.
+#' @param regularization_alpha Alpha value to be used in the variable selection perfomed by the glmnet package. 1 corresponds to lasso and 0 corresponds to ridge and the former is the default.
 #' @param sigma_correction A character variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias and if so whether we use the old or new correction method. It can take values 'non', 'old' or 'new'.
 #' @param missing  This argument should not be changed manually. A logical variable which is FALSE by default and TRUE if this function is called withing the function \code{\link{ui.missing}}.
+#' @param lambda The lambda value to use when using glmnet for variable selection. Options are 'lambda1se' and 'lambdamin' where the former is the default. See the help file for glmnet package for more details.}
+#' @param vs The variable selection method for the outcome models. Options are 'hdm' and 'glmnet' where the former is the default. See the help files for glmnet and hdm packages for more details.}
 #'
 #' @details In order to visualize the results, you can use \code{\link{plot.ui}}. Details about estimators can be found in Genbäck and de Luna (2018)
 #'
@@ -105,7 +108,7 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
                       sand = TRUE, gridn = 21,
                       rho.plotrange = c(-0.5, 0.5), alpha = 0.05,
                       regularization_alpha = 1,
-                      sigma_correction = 'new', missing = FALSE) {
+                      sigma_correction = 'new', missing = FALSE,lambda='lambda1se',vs='hdm') {
   # comment this for now, one should be carefull when to use rho0 and when rho1, also it might be that we dont need ui in the plot (infer=F)
   # if (min(rho.plotrange) >= min(rho0)) {
   #   	warning('Lower bound of plotrange is >= lower bound of UI, it needs to be less than. You will not be able to plot this object.')
@@ -165,17 +168,23 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
   # which indecies from XY and XT?
   XYhat <- XY1hat <- XY0hat <- XThat <- c()
   if (!subset == "noselection") {
-    XY1hat <- vs.hdm(data[data[, Tname] == 1, Yname], data[data[, Tname] == 1, XYnames_preselection])
-    if (!missing) {
-        XY0hat <- vs.hdm(data[data[, Tname] == 0, Yname], data[data[, Tname] == 0, XYnames_preselection])
-     }
+    if(vs=='hdm'){
+      XY1hat <- vs.hdm(data[data[, Tname] == 1, Yname], data[data[, Tname] == 1, XYnames_preselection])
+      if (!missing)
+          XY0hat <- vs.hdm(data[data[, Tname] == 0, Yname], data[data[, Tname] == 0, XYnames_preselection])
+       }
+    else if(vs=='glmnet'){
+      XY1hat <-  vs.glmnet(data[data[, Tname] == 1, Yname], data[data[, Tname] == 1, XYnames_preselection],alpha=regularization_alpha,lambda=lambda)
+      if (!missing)
+        XY0hat <-  vs.glmnet(data[data[, Tname] == 0, Yname], data[data[, Tname] == 0, XYnames_preselection],alpha=regularization_alpha,lambda=lambda)
+    }
     # XY1hat=vs.glmnet(data[data[,Tname]==1,Yname],data[data[,Tname]==1,XYnames_preselection],alpha=regularization_alpha)
     # XY0hat=vs.glmnet(data[data[,Tname]==0,Yname],data[data[,Tname]==0,XYnames_preselection],alpha=regularization_alpha)
 
     XYhat <- union(XY1hat, XY0hat)
   }
   if (!subset == "noselection" & !subset == "single") {
-    XThat <- vs.glmnet(data[, Tname], data[, XTnames_preselection], alpha = regularization_alpha)
+    XThat <- vs.glmnet(data[, Tname], data[, XTnames_preselection], alpha = regularization_alpha,lambda=lambda)
   }
 
 
@@ -194,9 +203,9 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
     outY_XY <- XYnames_preselection[XYhat]
     outT_XT <- XYnames_preselection[XYhat]
   } else if (subset == "double") {
-   if( (length(XYhat) == 0 | length(XThat) == 0)) {
-        stop("No covariates has been selected for at least one of the nuisance models.")
-      }
+    if( (length(XYhat) == 0 | length(XThat) == 0)) {
+      stop("No covariates has been selected for at least one of the nuisance models.")
+    }
     outY_XY <- union(XYnames_preselection[XYhat], XTnames_preselection[XThat])
     outT_XT <- union(XYnames_preselection[XYhat], XTnames_preselection[XThat])
   } else {
@@ -250,8 +259,8 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
 
   out.formula <- out.formula_postselection
   output <- FUN(out.formula, y.data, gamma, t.data,
-    rho0 = rho0, rho1 = rho1,
-    sand, gridn, rho.plotrange, alpha, sigma_correction
+                rho0 = rho0, rho1 = rho1,
+                sand, gridn, rho.plotrange, alpha, sigma_correction
   )
 
   output$treat.model <- treat.model

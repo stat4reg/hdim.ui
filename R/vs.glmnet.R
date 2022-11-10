@@ -8,7 +8,7 @@
 #' @export
 
 
-vs.glmnet <- function(Y, X, alpha) {
+vs.glmnet <- function(Y, X, alpha, lambda) {
   X <- as.matrix(X)
 
   if (length(unique(Y)) > 2) {
@@ -21,6 +21,8 @@ vs.glmnet <- function(Y, X, alpha) {
     )
   }
 
-
-  return(which(coef(fit)[-1] != 0))
+  if(lambda=='lambda1se')
+    return(which(coef(fit)[-1] != 0))
+  else if(lambda=='lambdamin')
+    return(which(coef(fit, s = fit$lambda.min)[-1] != 0))
 }
