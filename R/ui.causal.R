@@ -150,11 +150,15 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
     covariatesdataframe <- cbind(Ymodelmatrix, Tmodelmatrix)
     vs_data <- cbind(data[, Yname, drop = FALSE], data[, Tname, drop = FALSE], covariatesdataframe[, !duplicated(c(names(Ymodelmatrix), names(Tmodelmatrix))), drop = FALSE])
     names(vs_data)[1:2] <- c(Yname, Tname)
+
+    #makedummyvariables
+    data=cbind(data[,Tname,drop=FALSE],model.matrix(~.,data=data[,-which(names(data)==Tname) ])[,-1])
+
   } else {
     if ((is.null(X) | is.null(Y) | is.null(T))) {
       stop("Variables cannot be NULL")
     }
-    vs_data <- data.frame(Y = Y, T = T, X)
+    vs_data =data <- data.frame(Y = Y, T = T, X)
     Yname <- "Y"
     Tname <- "T"
     XYnames_preselection <- XTnames_preselection <- names(vs_data[-c(1, 2)])
@@ -249,8 +253,6 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
   #   t.data <- t.data[complete.cases(t.data), , drop = FALSE]
   # }
 
-  #makedummyvariables
-  data=cbind(data[,Tname,drop=FALSE],model.matrix(~.,data=data[,-which(names(data)==Tname) ])[,-1])
 
   treat.model <- glm(treat.formula_postselection, family = binomial(link = "probit"), data = data)
   # XThatdesign<-model.matrix(treat.model)
