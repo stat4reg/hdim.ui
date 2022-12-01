@@ -14,14 +14,11 @@
 #'
 #' @importFrom stats binomial coef complete.cases cov get_all_vars glm lm model.matrix pnorm qnorm
 #' @export
-ui.act <- function(out.formula, y.data,
-                   gamma, t.data,
+ui.act <- function(out.formula, treat.formula, data, gamma,
                    rho0 = c(-0.3, 0.3),
                    sand = TRUE, gridn = 21,
                    rho.plotrange = c(-0.5, 0.5), alpha = 0.05, sigma_correction, ...) {
-  output0 <- ui.y0t1(
-    out.formula, y.data,
-    gamma, t.data,
+  output0 <- ui.y0t1(out.formula, treat.formula, data, gamma,
     rho0,
     sand, gridn,
     rho.plotrange, alpha, sigma_correction

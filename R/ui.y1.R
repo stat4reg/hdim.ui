@@ -14,8 +14,7 @@
 #'
 #' @importFrom stats binomial coef complete.cases cov get_all_vars glm lm model.matrix pnorm qnorm
 #' @export
-ui.y1 <- function(out.formula, y.data,
-                  gamma, t.data,
+ui.y1 <- function(out.formula, treat.formula, data, gamma,
                   rho1 = c(-0.3, 0.3),
                   sand = TRUE, gridn = 21,
                   rho.plotrange = c(-0.5, 0.5), alpha = 0.05, sigma_correction, ...) {
@@ -24,20 +23,28 @@ ui.y1 <- function(out.formula, y.data,
   output$plot <- list()
   output$plot$plot <- plot
 
-  t <- t.data[, 1]
-  y <- y.data[, 1]
+  out.names <- all.vars(out.formula)
+  Yname <- out.names[1]
+  treat.names <- all.vars(treat.formula)
+  Tname <- treat.names[1]
+
+  t <- data[, Tname]
+  y <- data[, Yname]
   y1 <- y[t == 1]
 
   n0 <- sum(t == 0)
   n1 <- sum(t == 1)
   N <- n0 + n1
-  p <- ncol(y.data) - 1
+  p <- length(out.names) - 1
 
-  out.model1 <- lm(out.formula, data = y.data[t == 1, ])
+  xb=Xy.design %*% BetaOLSy1
+  xb1=Xy.design[t == 1, ] %*% BetaOLSy1
+
+  out.model1 <- lm(out.formula, data = data[t == 1, ])
   output$out.model1 <- out.model1
 
-  Xy.design <- model.matrix(lm(out.formula, data = y.data))
-  Xt.design <- model.matrix(as.formula(paste("~", paste(names(t.data)[-1], collapse = "+"))), data = t.data)
+  Xy.design <- model.matrix(out.formula, data = data)
+  Xt.design <- model.matrix(treat.formula, data = data)
 
   # Estimating BetaOLS treated
   BetaOLSy1 <- coef(summary(out.model1))[, 1]
@@ -79,11 +86,11 @@ ui.y1 <- function(out.formula, y.data,
   output$OR <- output$DR
 
   ##################### NAIV ESTIMATES #####################
-  phat <- pnorm(Xt.design %*% gamma)
+  phat <- pnorm(u)
   phat1 <- phat[t == 1]
 
-  output$OR$naiv <- (sum(Xy.design[t == 1, ] %*% BetaOLSy1) + sum(Xy.design[t == 0, ] %*% BetaOLSy1)) / N
-  output$DR$naiv <- output$OR$naiv + (sum((y1 - Xy.design[t == 1, ] %*% BetaOLSy1) / phat1)) / N
+  output$OR$naiv <- (sum(xb1) + sum(Xy.design[t == 0, ] %*% BetaOLSy1)) / N
+  output$DR$naiv <- output$OR$naiv + (sum((y1 - xb1) / phat1)) / N
 
   ##################### CONFOUNDING BIAS #####################
   exgt1 <- rep(1, n1) %*% Xy.design[t == 1, ] / n1
@@ -122,10 +129,10 @@ ui.y1 <- function(out.formula, y.data,
   if (sand == TRUE) {
     output$OR$se <- sqrt(sandwich.ya(Xy.design, y, t, BetaOLSy1, output$OR$naiv, N, p, Y1 = TRUE))
   } else {
-    output$OR$se <- sqrt(rep(1, N) %*% Xy.design %*% (sigma1hatOLS^2 * solve(t(Xy.design[t == 1, ]) %*% Xy.design[t == 1, ])) %*% t(X) %*% rep(1, N) / N^2 +
-      (BetaOLSy1) %*% cov(X) %*% (BetaOLSy1) / N)
+    output$OR$se <- sqrt(rep(1, N) %*% Xy.design %*% (sigma1hatOLS^2 * solve(t(Xy.design[t == 1, ]) %*% Xy.design[t == 1, ])) %*% t(Xy.design) %*% rep(1, N) / N^2 +
+      (BetaOLSy1) %*% cov(Xy.design) %*% (BetaOLSy1) / N)
   }
-  I <- Xy.design %*% BetaOLSy1 + t * ((y - Xy.design %*% BetaOLSy1) / phat) - output$DR$naiv
+  I <- xb + t * ((y - xb) / phat) - output$DR$naiv
   output$DR$se <- sqrt(sum(I^2)) / N
 
   zalpha <- qnorm(1 - alpha / 2)

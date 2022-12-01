@@ -17,8 +17,7 @@
 #' @export
 #'
 #'
-ui.ace <- function(out.formula, y.data,
-                   gamma, t.data,
+ui.ace <- function(out.formula, treat.formula, data, gamma,
                    rho0 = c(-0.3, 0.3), rho1 = c(-0.3, 0.3),
                    sand = TRUE, gridn = 21,
                    rho.plotrange = c(-0.5, 0.5), alpha = 0.05, sigma_correction, ...) {
@@ -32,16 +31,14 @@ ui.ace <- function(out.formula, y.data,
 
 
   output0 <- ui.y0(
-    out.formula, y.data,
-    gamma, t.data,
+    out.formula, treat.formula, data, gamma,
     rho0,
     sand, gridn,
     rho.plotrange, alpha, sigma_correction
   )
 
   output1 <- ui.y1(
-    out.formula, y.data,
-    gamma, t.data,
+    out.formula, treat.formula, data, gamma,
     rho1,
     sand, gridn,
     rho.plotrange, alpha, sigma_correction

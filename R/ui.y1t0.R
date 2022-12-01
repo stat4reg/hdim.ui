@@ -14,8 +14,7 @@
 #'
 #' @importFrom stats binomial coef complete.cases cov get_all_vars glm lm model.matrix pnorm qnorm
 #' @export
-ui.y1t0 <- function(out.formula, y.data,
-                    gamma, t.data,
+ui.y1t0 <- function(out.formula, treat.formula, data, gamma,
                     rho1 = c(-0.3, 0.3),
                     sand = TRUE, gridn = 21,
                     rho.plotrange = c(-0.5, 0.5), alpha = 0.05, sigma_correction, ...) {
@@ -24,21 +23,28 @@ ui.y1t0 <- function(out.formula, y.data,
   output$plot <- list()
   output$plot$plot <- plot
 
-  t <- t.data[, 1]
-  y <- y.data[, 1]
+  out.names <- all.vars(out.formula)
+  Yname <- out.names[1]
+  treat.names <- all.vars(treat.formula)
+  Tname <- treat.names[1]
+
+  t <- data[, Tname]
+  y <- data[, Yname]
   y1 <- y[t == 1]
 
 
   n0 <- sum(t == 0)
   n1 <- sum(t == 1)
   N <- n0 + n1
-  p <- ncol(y.data) - 1
+  p <- length(out.names) - 1
 
-  out.model1 <- lm(out.formula, data = y.data[t == 1, ])
+  xb=Xy.design %*% BetaOLSy1
+
+  out.model1 <- lm(out.formula, data = data[t == 1, ])
   output$out.model1 <- out.model1
 
-  Xy.design <- model.matrix(lm(out.formula, data = y.data))
-  Xt.design <- model.matrix(as.formula(paste("~", paste(names(t.data)[-1], collapse = "+"))), data = t.data)
+  Xy.design <- model.matrix(out.formula, data = data)
+  Xt.design <- model.matrix(treat.formula, data = data)
 
 
   # Estimating BetaOLS treated
@@ -86,7 +92,7 @@ ui.y1t0 <- function(out.formula, y.data,
   output$OR <- output$DR
 
   ##################### NAIV ESTIMATES #####################
-  phat <- pnorm(Xt.design %*% gamma)
+  phat <- pnorm(u)
   phat1 <- phat[t == 1]
 
   output$OR$naiv <- mean(Xy.design[t == 0, ] %*% BetaOLSy1)
@@ -133,7 +139,7 @@ ui.y1t0 <- function(out.formula, y.data,
     output$OR$se <- sqrt(((BetaOLSy1) %*% cov(Xy.design[t == 0, ]) %*% (BetaOLSy1)) / n0)
   }
 
-  I <- ((1 - t) * Xy.design %*% BetaOLSy1 + (t) * (1 - phat) * (y - Xy.design %*% BetaOLSy1) / (phat)) / n0 * N - output$DR$naiv
+  I <- ((1 - t) * xb + (t) * (1 - phat) * (y - xb) / (phat)) / n0 * N - output$DR$naiv
   output$DR$se <- sqrt(sum(I^2)) / N
 
 

@@ -237,28 +237,29 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
 
   # t.data<-get_all_vars(treat.formula_postselection,data=data)
   # y.data<-get_all_vars(out.formula_postselection,data=data)
-  t.data <- data[, c(Tname, outT_XT)]
-  y.data <- data[, c(Yname, outY_XY)]
-  #  remove individuals with partial missing data in the covariates
-  if (sum(complete.cases(y.data) == FALSE) > 0) {
-    warning(paste("Partial missing values in covariates! ", sum(complete.cases(y.data) == FALSE), "individual(s) are removed from the outcome regression."))
-    y.data <- y.data[complete.cases(y.data), , drop = FALSE]
-  }
-  if (sum(complete.cases(t.data) == FALSE) > 0) {
-    warning(paste("Partial missing values in covariates. ", sum(complete.cases(t.data) == FALSE), "individual(s) are removed from the propensity score regression."))
-    t.data <- t.data[complete.cases(t.data), , drop = FALSE]
-  }
+  # t.data <- data[, c(Tname, outT_XT)]
+  # y.data <- data[, c(Yname, outY_XY)]
+  # #  remove individuals with partial missing data in the covariates
+  # if (sum(complete.cases(y.data) == FALSE) > 0) {
+  #   warning(paste("Partial missing values in covariates! ", sum(complete.cases(y.data) == FALSE), "individual(s) are removed from the outcome regression."))
+  #   y.data <- y.data[complete.cases(y.data), , drop = FALSE]
+  # }
+  # if (sum(complete.cases(t.data) == FALSE) > 0) {
+  #   warning(paste("Partial missing values in covariates. ", sum(complete.cases(t.data) == FALSE), "individual(s) are removed from the propensity score regression."))
+  #   t.data <- t.data[complete.cases(t.data), , drop = FALSE]
+  # }
 
 
 
-  treat.model <- glm(treat.formula_postselection, family = binomial(link = "probit"), data = t.data)
+  treat.model <- glm(treat.formula_postselection, family = binomial(link = "probit"), data = data)
   # XThatdesign<-model.matrix(treat.model)
   gamma <- coef(summary(treat.model))[, 1]
 
 
 
   out.formula <- out.formula_postselection
-  output <- FUN(out.formula, y.data, gamma, t.data,
+  treat.formula <- treat.formula_postselection
+  output <- FUN(out.formula, treat.formula, data, gamma,
                 rho0 = rho0, rho1 = rho1,
                 sand, gridn, rho.plotrange, alpha, sigma_correction
   )

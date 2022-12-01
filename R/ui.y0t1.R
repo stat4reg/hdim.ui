@@ -13,8 +13,7 @@
 #' @param sigma_correction A character variable which specifies if a corrected estimation of variance of the outcome model is used to find the confounding bias and if so whether we use the old or new correction method. It can take values 'non', 'old' or 'new'.
 #' @importFrom stats binomial coef complete.cases cov get_all_vars glm lm model.matrix pnorm qnorm
 #' @export
-ui.y0t1 <- function(out.formula, y.data,
-                    gamma, t.data,
+ui.y0t1 <- function(out.formula, treat.formula, data, gamma,
                     rho0 = c(-0.3, 0.3),
                     sand = TRUE, gridn = 21,
                     rho.plotrange = c(-0.5, 0.5), alpha = 0.05, sigma_correction, ...) {
@@ -23,22 +22,28 @@ ui.y0t1 <- function(out.formula, y.data,
   output$plot <- list()
   output$plot$plot <- plot
 
-  t <- t.data[, 1]
-  y <- y.data[, 1]
+  out.names <- all.vars(out.formula)
+  Yname <- out.names[1]
+  treat.names <- all.vars(treat.formula)
+  Tname <- treat.names[1]
+
+  t <- data[, Tname]
+  y <- data[, Yname]
   y0 <- y[t == 0]
 
 
   n0 <- sum(t == 0)
   n1 <- sum(t == 1)
   N <- n0 + n1
-  p <- ncol(y.data) - 1
+  p <- length(out.names) - 1
 
+  xb=Xy.design %*% BetaOLSy0
 
-  out.model0 <- lm(out.formula, data = y.data[t == 0, ])
+  out.model0 <- lm(out.formula, data = data[t == 0, ])
   output$out.model0 <- out.model0
 
-  Xy.design <- model.matrix(lm(out.formula, data = y.data))
-  Xt.design <- model.matrix(as.formula(paste("~", paste(names(t.data)[-1], collapse = "+"))), data = t.data)
+  Xy.design <- model.matrix(out.formula, data = data)
+  Xt.design <- model.matrix(treat.formula, data = data)
 
   # Estimating BetaOLS untreated
   BetaOLSy0 <- coef(summary(out.model0))[, 1]
@@ -84,7 +89,7 @@ ui.y0t1 <- function(out.formula, y.data,
   output$OR <- output$DR
 
   ##################### NAIV ESTIMATES #####################
-  phat <- pnorm(Xt.design %*% gamma)
+  phat <- pnorm(u)
   phat0 <- phat[t == 0]
   output$OR$naiv <- mean(Xy.design[t == 1, ] %*% BetaOLSy0)
   output$DR$naiv <- output$OR$naiv + sum((y0 - Xy.design[t == 0, ] %*% BetaOLSy0) / (1 - phat0)) / n1
@@ -130,7 +135,7 @@ ui.y0t1 <- function(out.formula, y.data,
     output$OR$se <- sqrt(((BetaOLSy0) %*% cov(Xy.design[t == 1, ]) %*% (BetaOLSy0)) / n1)
   }
 
-  I <- ((t) * Xy.design %*% BetaOLSy0 + (1 - t) * phat * (y - Xy.design %*% BetaOLSy0) / (1 - phat)) / n1 * N - output$DR$naiv
+  I <- ((t) * xb + (1 - t) * phat * (y - xb) / (1 - phat)) / n1 * N - output$DR$naiv
   output$DR$se <- sqrt(sum(I^2)) / N
 
   zalpha <- qnorm(1 - alpha / 2)
