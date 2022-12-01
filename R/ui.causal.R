@@ -231,8 +231,8 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
     FUN <- ui.y1t0
   }
 
-  out.formula_postselection <- paste(Yname, paste(outY_XY, collapse = "+"), sep = " ~ ")
-  treat.formula_postselection <- paste(Tname, paste(outT_XT, collapse = "+"), sep = " ~ ")
+  out.formula_postselection <- as.formula(paste(Yname, paste(outY_XY, collapse = "+"), sep = " ~ "))
+  treat.formula_postselection <- as.formula(paste(Tname, paste(outT_XT, collapse = "+"), sep = " ~ "))
 
 
   # t.data<-get_all_vars(treat.formula_postselection,data=data)
