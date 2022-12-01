@@ -36,7 +36,7 @@ ui.y0 <- function(out.formula, treat.formula, data, gamma,
   n0 <- sum(t == 0)
   n1 <- sum(t == 1)
   N <- n0 + n1
-  p <- length(out.names) - 1
+  p <- length(attr(terms(out.formula), "term.labels"))
 
 
 
