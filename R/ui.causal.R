@@ -148,16 +148,16 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
     XTnames_preselection <- names(Tmodelmatrix)
 
     covariatesdataframe <- cbind(Ymodelmatrix, Tmodelmatrix)
-    data <- cbind(data[, Yname, drop = FALSE], data[, Tname, drop = FALSE], covariatesdataframe[, !duplicated(c(names(Ymodelmatrix), names(Tmodelmatrix))), drop = FALSE])
-    names(data)[1:2] <- c(Yname, Tname)
+    vs_data <- cbind(data[, Yname, drop = FALSE], data[, Tname, drop = FALSE], covariatesdataframe[, !duplicated(c(names(Ymodelmatrix), names(Tmodelmatrix))), drop = FALSE])
+    names(vs_data)[1:2] <- c(Yname, Tname)
   } else {
     if ((is.null(X) | is.null(Y) | is.null(T))) {
       stop("Variables cannot be NULL")
     }
-    data <- data.frame(Y = Y, T = T, X)
+    vs_data <- data.frame(Y = Y, T = T, X)
     Yname <- "Y"
     Tname <- "T"
-    XYnames_preselection <- XTnames_preselection <- names(data[-c(1, 2)])
+    XYnames_preselection <- XTnames_preselection <- names(vs_data[-c(1, 2)])
   }
   # }
 
@@ -169,22 +169,22 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
   XYhat <- XY1hat <- XY0hat <- XThat <- c()
   if (!subset == "noselection") {
     if(vs=='hdm'){
-      XY1hat <- vs.hdm(data[data[, Tname] == 1, Yname], data[data[, Tname] == 1, XYnames_preselection])
+      XY1hat <- vs.hdm(vs_data[vs_data[, Tname] == 1, Yname], vs_data[vs_data[, Tname] == 1, XYnames_preselection])
       if (!missing)
-          XY0hat <- vs.hdm(data[data[, Tname] == 0, Yname], data[data[, Tname] == 0, XYnames_preselection])
+          XY0hat <- vs.hdm(vs_data[vs_data[, Tname] == 0, Yname], vs_data[vs_data[, Tname] == 0, XYnames_preselection])
        }
     else if(vs=='glmnet'){
-      XY1hat <-  vs.glmnet(data[data[, Tname] == 1, Yname], data[data[, Tname] == 1, XYnames_preselection],alpha=regularization_alpha,lambda=lambda)
+      XY1hat <-  vs.glmnet(vs_data[vs_data[, Tname] == 1, Yname], vs_data[vs_data[, Tname] == 1, XYnames_preselection],alpha=regularization_alpha,lambda=lambda)
       if (!missing)
-        XY0hat <-  vs.glmnet(data[data[, Tname] == 0, Yname], data[data[, Tname] == 0, XYnames_preselection],alpha=regularization_alpha,lambda=lambda)
+        XY0hat <-  vs.glmnet(vs_data[vs_data[, Tname] == 0, Yname], vs_data[vs_data[, Tname] == 0, XYnames_preselection],alpha=regularization_alpha,lambda=lambda)
     }
-    # XY1hat=vs.glmnet(data[data[,Tname]==1,Yname],data[data[,Tname]==1,XYnames_preselection],alpha=regularization_alpha)
-    # XY0hat=vs.glmnet(data[data[,Tname]==0,Yname],data[data[,Tname]==0,XYnames_preselection],alpha=regularization_alpha)
+    # XY1hat=vs.glmnet(vs_data[vs_data[,Tname]==1,Yname],vs_data[vs_data[,Tname]==1,XYnames_preselection],alpha=regularization_alpha)
+    # XY0hat=vs.glmnet(vs_data[vs_data[,Tname]==0,Yname],vs_data[vs_data[,Tname]==0,XYnames_preselection],alpha=regularization_alpha)
 
     XYhat <- union(XY1hat, XY0hat)
   }
   if (!subset == "noselection" & !subset == "single") {
-    XThat <- vs.glmnet(data[, Tname], data[, XTnames_preselection], alpha = regularization_alpha,lambda=lambda)
+    XThat <- vs.glmnet(vs_data[, Tname], vs_data[, XTnames_preselection], alpha = regularization_alpha,lambda=lambda)
   }
 
 
