@@ -38,8 +38,7 @@ ui.y0 <- function(out.formula, treat.formula, data, gamma,
   N <- n0 + n1
   p <- length(out.names) - 1
 
-  xb=Xy.design %*% BetaOLSy0
-  xb0=Xy.design[t == 0, ] %*% BetaOLSy0
+
 
   out.model0 <- lm(out.formula, data = data[t == 0, ])
   output$out.model0 <- out.model0
@@ -62,6 +61,9 @@ ui.y0 <- function(out.formula, treat.formula, data, gamma,
   gridrho0 <- t0[[1]]
   nui0 <- t0[[2]]
   output$plot$nui0 <- nui0
+
+  xb=Xy.design %*% BetaOLSy0
+  xb0=Xy.design[t == 0, ] %*% BetaOLSy0
 
   if (sigma_correction=='non') {
     output$plot$sigma0 <- sigma0hatOLS

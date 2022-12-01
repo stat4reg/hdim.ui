@@ -38,7 +38,6 @@ ui.y1t0 <- function(out.formula, treat.formula, data, gamma,
   N <- n0 + n1
   p <- length(out.names) - 1
 
-  xb=Xy.design %*% BetaOLSy1
 
   out.model1 <- lm(out.formula, data = data[t == 1, ])
   output$out.model1 <- out.model1
@@ -67,6 +66,7 @@ ui.y1t0 <- function(out.formula, treat.formula, data, gamma,
   output$plot$nui1 <- nui1
 
 
+  xb=Xy.design %*% BetaOLSy1
 
   if (sigma_correction=='non') { output$plot$sigma1 <- sigma1hatOLS
   } else if (sigma_correction=='old') {output$plot$sigma1 <- sigmaOLScor1(Xy.design[t == 1, ], sigma1hatOLS, n1, p, u1, gridrho1)
