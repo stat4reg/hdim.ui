@@ -250,7 +250,7 @@ ui.causal <- function(out.formula = NULL, treat.formula = NULL,
   # }
 
   #makedummyvariables
-  data=model.matrix(~.,data=data)[,-1]
+  data=data.frame(model.matrix(~.,data=data)[,-1])
 
   treat.model <- glm(treat.formula_postselection, family = binomial(link = "probit"), data = data)
   # XThatdesign<-model.matrix(treat.model)
