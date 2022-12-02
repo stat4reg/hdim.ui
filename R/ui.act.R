@@ -2,9 +2,9 @@
 #'
 #' This is a support function for \code{\link{ui.causal}} and derives uncertainty intervals for average causal effect on treated.
 #' @param out.formula Formula for the outcome regression model
-#' @param y.data data.frame containing variables needed for fitting the outcome model
+#' @param treat.formula Formula for the propensity score model (regression model for treatment assignment).
+#' @param data data.frame containing the variables in the formulas including dummy variables.
 #' @param gamma Vector of estimated coefficients from the fitted model for treatment variable
-#' @param t.data data.frame containing variables needed for fitting the propensity score model
 #' @param rho0 Pre-specified interval for \code{rho0}.
 #' @param sand Specifies which estimator of the standard errors should be used for OR, see details in \code{\link{ui.causal}}.
 #' @param gridn Number of fixed points within the \code{rho0} interval for which sigma1 should be estimated.
