@@ -3,6 +3,8 @@ hdim.ui - R package for sensitivity analysis in high-dimensional causal inferenc
 
 Built using code from the R-package **ui** available on CRAN.
 
+Data is available here: https://github.com/mdcattaneo/replication-C_2010_JOE
+
 Variables:
 (1) age, (2) education (less than high school, high
                         school, greater than high school), (3) white (yes/no), (4) hispanic (yes/no), (5) foreign (yes/no),
