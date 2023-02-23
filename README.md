@@ -15,8 +15,12 @@ of prenatal visits.3
 
 
 ```
+
+install.packages(c('devtools','hdm','glmnet','foreign'))
+
 library(devtools)
 install_github('https://github.com/stat4reg/hdim.ui.git')
+
 
 library(hdm)
 library(glmnet)
