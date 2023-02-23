@@ -3,6 +3,8 @@ hdim.ui - R package for sensitivity analysis in high-dimensional causal inferenc
 
 Built using code from the R-package **ui** available on CRAN.
 
+The code below replicates the case study in the manuscript "Valid causal inference with unobserved confounding in high-dimensional settings" by Niloofar Moosavi, Tetiana Gorbach and Xavier de Luna (2023).
+
 Data is available here: https://github.com/mdcattaneo/replication-C_2010_JOE
 
 Variables:
