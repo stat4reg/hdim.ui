@@ -5,7 +5,7 @@ Built using code from the R-package **ui** available on CRAN.
 
 The code below replicates the case study in the manuscript "Valid causal inference with unobserved confounding in high-dimensional settings" by Niloofar Moosavi, Tetiana Gorbach and Xavier de Luna (2023).
 
-Data is available here: https://github.com/mdcattaneo/replication-C_2010_JOE
+Please note that the link to the data provided in the code is currently pointing to a specific location. In order to access the data, you will need to download it from this link: https://github.com/mdcattaneo/replication-C_2010_JOE.
 
 Variables:
 (1) age, (2) education (less than high school, high
